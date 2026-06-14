@@ -10,14 +10,14 @@ Monorepo for **Ordia** — durable agent orchestration and implementation contro
 | [`tools/`](tools/) | Bundle sync, release verification, documentation audits |
 | [`examples/greenfield/`](examples/greenfield/) | Minimal greenfield walkthrough + CI smoke |
 
-**Current version:** `ordia-core` **0.14.0**
+**Current version:** `ordia-core` **0.15.0**
 
 ---
 
 ## Install (consumers)
 
 ```powershell
-pip install ordia-core==0.14.0
+pip install ordia-core==0.15.0
 ordia init --with-cursor
 ```
 

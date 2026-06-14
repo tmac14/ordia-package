@@ -22,6 +22,33 @@ auditors tracing when behavior changed.
 
 ---
 
+## [0.15.0] — 2026-06-14
+
+**Program:** Ordia v0.15.0 — professional parallel orchestration and adoption
+
+### Added
+
+- `agent_registry.schema.json` + monorepo template with six generic agents (backend, frontend, data, infra, QA, docs)
+- Planning queues `planning_pending`, `locks_pending`; prefix write-path collision detection; mutual exclusion groups
+- `ordia task lock add|release|list` — parallel-safety locks in TASK_REGISTRY
+- Hook enforcement: foreign lock paths; peer `planned_write_paths` when `enforcement.strictParallelPaths: true`
+- `orchestrate_parallel` intent; parallel checklist in `orchestrate_batch` emission
+- `ordia docs audit` + `ordia init --audit-docs` — full-repo adoption report (`ADOPTION_REPORT.md`)
+- `DOCUMENTATION_INVENTORY.md` template (monorepo); extended inventory validation with relative paths
+- Command catalog L1/L2/L3 `layer`/`domain`; smart `sync-commands` section grouping; `workflowIntents[]` seed
+- `validateOnControlCheck` wired in `validate --project`
+- Workflow intents: `implement_ui`, `implement_ux`, `modify_feature`; `ui.md` template
+- Examples: `brownfield-adoption/`, `project-commands/`
+
+### Changed
+
+- `task summary` includes path collisions, all locks, owner counts
+- Pip catalog stub expanded (10 L1 commands including docs-audit, task-lock, workflow-list)
+- `workflow_intents_lite` resolves core intents from installed wheel (pip-only fix)
+- `DAILY_USAGE.md` workflow intent taxonomy and adoption commands
+
+---
+
 ## [0.14.0] — 2026-06-14
 
 **Program:** Ordia v0.14.0 — hardening residual (protocols, manifest rules, strict modes, examples)

@@ -18,6 +18,7 @@ from ordia.validator.common import (
     DEFAULT_ALLOWED_STATUSES,
     LEGACY_TASK_PROTOCOL,
     PACKET_REQUIRED_STATUSES,
+    QUEUE_REQUIRED_STATUSES,
     QUEUE_STATUS,
     VALID_PROTOCOLS,
     VALID_RUNTIME_PROTOCOL_PAIRS,
@@ -28,6 +29,7 @@ from ordia.validator.common import (
     Validation,
     parse_yaml_document,
 )
+from ordia.validator.parallel import collect_write_paths, paths_overlap
 from ordia.validator.profile import validate_profile_match
 
 logger = logging.getLogger(__name__)
@@ -68,7 +70,12 @@ class ProjectValidationOptions:
 
 
 def load_yaml_file(path: Path, root: Path, validation: Validation) -> dict[str, Any]:
-    source = str(path.relative_to(root))
+    root = root.resolve()
+    path = path.resolve()
+    try:
+        source = str(path.relative_to(root))
+    except ValueError:
+        source = str(path)
     try:
         text = path.read_text(encoding="utf-8")
     except (OSError, UnicodeError) as exc:
@@ -136,6 +143,8 @@ def validate_tasks(
     max_in_flight_per_owner: int | None = None,
     strict_in_flight_limits: bool = False,
     strict_limbo: bool = False,
+    valid_owners: set[str] | None = None,
+    agent_by_id: dict[str, dict[str, Any]] | None = None,
 ) -> None:
     tasks = registry.get("tasks", [])
     if not isinstance(tasks, list):
@@ -174,6 +183,13 @@ def validate_tasks(
 
         validate_task_runtime_protocol(task_id, task, result)
 
+        owner = str(task.get("owner", "")).strip()
+        if valid_owners and status in QUEUE_REQUIRED_STATUSES:
+            if not owner or owner == "Unassigned":
+                result.error(f"{task_id}: active task requires assigned owner from AGENT_REGISTRY")
+            elif owner not in valid_owners:
+                result.error(f"{task_id}: owner {owner!r} is not registered in AGENT_REGISTRY")
+
     queues = registry.get("queues", {})
     queued_tasks: dict[str, str] = {}
     for queue, allowed in QUEUE_STATUS.items():
@@ -193,7 +209,8 @@ def validate_tasks(
                 result.error(f"Queue {queue}: {task_id} has incompatible status {status}")
 
     for task_id, task in task_by_id.items():
-        if task.get("status") in ACTIVE_STATUSES and task_id not in queued_tasks:
+        status = task.get("status")
+        if status in QUEUE_REQUIRED_STATUSES and task_id not in queued_tasks:
             result.error(f"{task_id}: active status is not represented in a queue")
 
     in_flight = [task_by_id[task_id] for task_id in queues.get("in_flight", []) if task_id in task_by_id]
@@ -232,23 +249,60 @@ def validate_tasks(
             else:
                 result.warn(message)
 
-    exact_writes: dict[str, str] = {}
+    write_paths_by_task: dict[str, list[str]] = {}
     for task in in_flight:
-        for path in task.get("planned_write_paths", []):
-            path = str(path)
-            if "*" in path or path.endswith("/"):
+        task_id = str(task["id"])
+        write_paths_by_task[task_id] = collect_write_paths(task)
+        for path in write_paths_by_task[task_id]:
+            for other_id, other_paths in write_paths_by_task.items():
+                if other_id == task_id:
+                    continue
+                for other_path in other_paths:
+                    if paths_overlap(path, other_path):
+                        result.error(
+                            f"Write-path collision: {path} ({task_id}) overlaps {other_path} ({other_id})"
+                        )
+
+    if agent_by_id:
+        for left in in_flight:
+            left_owner = str(left.get("owner", ""))
+            left_agent = agent_by_id.get(left_owner, {})
+            left_group = str(left_agent.get("excludes", "")).strip()
+            if not left_group:
                 continue
-            if path in exact_writes:
-                result.error(f"Write-path collision: {path} in {exact_writes[path]} and {task['id']}")
-            exact_writes[path] = str(task["id"])
+            left_paths = write_paths_by_task.get(str(left["id"]), [])
+            for right in in_flight:
+                if right is left:
+                    continue
+                right_owner = str(right.get("owner", ""))
+                right_agent = agent_by_id.get(right_owner, {})
+                if str(right_agent.get("excludes", "")).strip() != left_group:
+                    continue
+                right_paths = write_paths_by_task.get(str(right["id"]), [])
+                for lp in left_paths:
+                    for rp in right_paths:
+                        if paths_overlap(lp, rp):
+                            result.error(
+                                f"Mutual exclusion group {left_group!r}: {left['id']} and {right['id']} "
+                                f"overlap on paths ({lp} vs {rp})"
+                            )
 
     active_locks = registry.get("active_locks", registry.get("locks", []))
     if not isinstance(active_locks, list):
         result.error("active_locks must be a list")
     else:
+        seen_lock_paths: dict[str, str] = {}
         for lock in active_locks:
             if not isinstance(lock, dict):
                 continue
+            lock_path = str(lock.get("path", "")).strip()
+            if lock_path:
+                if lock_path in seen_lock_paths:
+                    result.error(
+                        f"Duplicate active lock path {lock_path!r} "
+                        f"({seen_lock_paths[lock_path]} and {lock.get('task_id')})"
+                    )
+                seen_lock_paths[lock_path] = str(lock.get("task_id", "unknown"))
             task_id = lock.get("task_id")
             if task_id and task_id not in task_by_id:
                 result.error(f"Active lock references unknown task: {task_id}")
@@ -256,12 +310,22 @@ def validate_tasks(
                 result.error(f"Active lock belongs to non-active task: {task_id}")
 
 
-def validate_agents(registry: dict[str, Any], agent_registry: dict[str, Any], result: Validation) -> None:
+def validate_agents(registry: dict[str, Any], agent_registry: dict[str, Any], result: Validation) -> dict[str, dict[str, Any]]:
     agents = agent_registry.get("agents", [])
     if not isinstance(agents, list):
         result.error("AGENT_REGISTRY agents must be a list")
-        return
-    ids = [str(agent.get("id")) for agent in agents if isinstance(agent, dict) and agent.get("id")]
+        return {}
+    agent_by_id: dict[str, dict[str, Any]] = {}
+    ids: list[str] = []
+    for agent in agents:
+        if not isinstance(agent, dict) or not agent.get("id"):
+            continue
+        agent_id = str(agent["id"])
+        ids.append(agent_id)
+        agent_by_id[agent_id] = agent
+        max_in_flight = agent.get("max_in_flight")
+        if max_in_flight is not None and int(max_in_flight) < 1:
+            result.error(f"AGENT_REGISTRY agent {agent_id}: max_in_flight must be >= 1")
     if len(ids) != len(set(ids)):
         result.error("AGENT_REGISTRY contains duplicate agent ids")
 
@@ -284,6 +348,25 @@ def validate_agents(registry: dict[str, Any], agent_registry: dict[str, Any], re
             result.error(f"Current assignment uses unknown owner: {owner}")
         if task_id not in task_ids:
             result.error(f"Current assignment references unknown task: {task_id}")
+
+    in_flight = registry.get("queues", {}).get("in_flight", [])
+    if isinstance(in_flight, list) and ids:
+        owner_counts: dict[str, int] = defaultdict(int)
+        for task in registry.get("tasks", []):
+            if not isinstance(task, dict):
+                continue
+            if str(task.get("id")) in in_flight:
+                owner_counts[str(task.get("owner", ""))] += 1
+        for agent_id, agent in agent_by_id.items():
+            limit = agent.get("max_in_flight")
+            if limit is None:
+                continue
+            count = owner_counts.get(agent_id, 0)
+            if count > int(limit):
+                result.error(
+                    f"Agent {agent_id} has {count} in-flight tasks (max_in_flight={limit})"
+                )
+    return agent_by_id
 
 
 def validate_authority_paths(
@@ -397,9 +480,15 @@ def validate_state(registry: dict[str, Any], state_path: Path, decision_ids: set
         return
     state_task = match.group(1)
     in_flight = registry.get("queues", {}).get("in_flight", [])
-    if state_task == "NONE" and in_flight:
-        result.error("Live state says Active task ID NONE while tasks are in flight")
-    elif state_task != "NONE" and state_task not in in_flight:
+    if not isinstance(in_flight, list):
+        in_flight = []
+    if state_task == "NONE":
+        if len(in_flight) == 1:
+            result.warn(
+                "ORCHESTRATION_STATE Active task ID is NONE with a single in-flight task — "
+                "consider setting Active task ID for recovery clarity"
+            )
+    elif state_task not in in_flight:
         result.error(f"Live state active task {state_task} is not in the in-flight queue")
 
 
@@ -434,15 +523,28 @@ def validate_inventory(root: Path, coordination_dir: Path, inventory_path: Path,
         result.warn(f"Inventory file missing: {inventory_path.relative_to(root)}")
         return
     text = inventory_path.read_text(encoding="utf-8")
-    covered = set(re.findall(r"`([^`]+\.(?:md|yaml))`", text, re.IGNORECASE))
-    files = {
+    covered_rel: set[str] = set()
+    covered_names: set[str] = set()
+    for match in re.findall(r"`([^`]+\.(?:md|yaml))`", text, re.IGNORECASE):
+        token = match.replace("\\", "/").strip()
+        covered_rel.add(token)
+        covered_names.add(Path(token).name)
+    files_top = {
         path.name
         for path in coordination_dir.iterdir()
         if path.is_file() and path.suffix.lower() in {".md", ".yaml"}
     }
-    missing = sorted(files - covered - {inventory_path.name})
-    if missing:
-        result.error("Unclassified top-level coordination documents: " + ", ".join(missing))
+    missing_top = sorted(files_top - covered_names - {inventory_path.name})
+    if missing_top:
+        result.error("Unclassified top-level coordination documents: " + ", ".join(missing_top))
+    for path in coordination_dir.rglob("*"):
+        if not path.is_file() or path.suffix.lower() not in {".md", ".yaml"}:
+            continue
+        rel = path.relative_to(root).as_posix()
+        if path.name == inventory_path.name:
+            continue
+        if rel not in covered_rel and path.name not in covered_names:
+            result.warn(f"Inventory may be missing path: {rel}")
 
 
 def validate_project(
@@ -485,10 +587,19 @@ def validate_project(
     agent_registry = load_yaml_file(cfg.agent_registry_path, root, result)
 
     if registry and agent_registry:
+        from ordia.validator.agent_registry_schema import validate_agent_registry_schema
         from ordia.validator.task_registry_schema import validate_task_registry_schema
 
         validate_task_registry_schema(registry, result)
+        validate_agent_registry_schema(agent_registry, result)
         decision_ids = markdown_table_ids(cfg.decision_log_path)
+        agent_by_id = validate_agents(registry, agent_registry, result)
+        control_plane_ids = {
+            str(runtime.get("id"))
+            for runtime in agent_registry.get("control_plane_runtimes", [])
+            if isinstance(runtime, dict) and runtime.get("id")
+        }
+        valid_owners = set(agent_by_id) | control_plane_ids if agent_by_id else None
         validate_tasks(
             registry,
             decision_ids,
@@ -497,9 +608,10 @@ def validate_project(
             max_in_flight_per_owner=opts.max_in_flight_per_owner,
             strict_in_flight_limits=opts.strict_in_flight_limits,
             strict_limbo=opts.strict_limbo,
+            valid_owners=valid_owners,
+            agent_by_id=agent_by_id or None,
         )
         validate_registry_state_staleness(registry, cfg.state_path, result)
-        validate_agents(registry, agent_registry, result)
         validate_authority_paths(registry, agent_registry, root, result)
         validate_control_plane_protocols(agent_registry, root, result)
         validate_state(registry, cfg.state_path, decision_ids, result)
@@ -552,5 +664,16 @@ def validate_project(
     if opts.validate_inventory:
         inventory = Path(opts.inventory_path) if opts.inventory_path else cfg.control_root / "DOCUMENTATION_INVENTORY.md"
         validate_inventory(root, cfg.control_root, inventory, result)
+
+    if cfg.commands_validate_on_control_check and cfg.commands_catalog:
+        from ordia.commands.catalog import resolve_catalog_paths, validate_catalog_sync
+
+        catalog_path, package_path = resolve_catalog_paths(root, cfg)
+        if package_path.is_file():
+            catalog_errors, _ = validate_catalog_sync(root, catalog_path, package_path, config=cfg)
+            for error in catalog_errors:
+                result.error(f"commands catalog: {error}")
+        else:
+            result.warn("commands.validateOnControlCheck set but package.json missing — skipped catalog sync")
 
     return result

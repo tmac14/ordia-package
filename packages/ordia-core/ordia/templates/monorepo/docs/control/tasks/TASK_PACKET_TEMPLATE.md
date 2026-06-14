@@ -11,7 +11,7 @@
 - Status:
 - Priority:
 - model_tier_min: (optional registry override, e.g. T2)
-- preferred_intent: (optional workflow intent id, e.g. implement_feature)
+- preferred_intent: (optional — implement_feature | modify_feature | implement_ui | implement_ux | fix_bug | refactor)
 - model_tier: (approved tier after user APPROVE MODEL T*)
 - model_approval: (user phrase / date)
 - Created:

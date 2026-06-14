@@ -96,7 +96,13 @@
                   "items": { "type": "string" }
                 },
                 "profile": { "type": "string" },
-                "runtime": { "type": "string" }
+                "runtime": { "type": "string" },
+                "layer": { "type": "string", "enum": ["L1", "L2", "L3"] },
+                "domain": {
+                  "type": "string",
+                  "enum": ["ordia", "dev", "db", "docker", "tunnel", "quality", "audit", "control", "help", "other"]
+                },
+                "command": { "type": "string" }
               },
               "additionalProperties": true
             }

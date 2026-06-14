@@ -81,7 +81,7 @@ def _state_session_mode(root: Path) -> str | None:
 
 
 def _model_block(root: Path, task_id: str | None, intent: WorkflowIntent) -> tuple[str, str | None]:
-    if intent.id not in {"approve_model", "implement", "implement_feature", "fix_bug", "refactor", "continue_wip", "plan"}:
+    if intent.id not in {"approve_model", "implement", "implement_feature", "modify_feature", "implement_ui", "implement_ux", "fix_bug", "refactor", "continue_wip", "plan"}:
         return "", None
     if not task_id:
         return "", None
@@ -153,6 +153,7 @@ def _render_template(template_name: str, ctx: EmitContext) -> str:
         "{{MODEL_BLOCK}}": ctx.model_block,
         "{{DATE}}": date.today().isoformat(),
         "{{PROFILE}}": ctx.profile,
+        "{{DELIVERABLE}}": "\n".join(_deliverable_lines(ctx)),
     }
     for key, value in replacements.items():
         text = text.replace(key, value)
@@ -185,8 +186,54 @@ def _intent_lines(ctx: EmitContext) -> list[str]:
     return lines
 
 
+def _parallel_checklist_lines(ctx: EmitContext) -> list[str]:
+    if ctx.intent.id not in {"orchestrate_batch", "orchestrate_parallel", "confirm_locks"}:
+        return []
+    try:
+        import yaml
+
+        config = load_ordia_config(ctx.root)
+        if config is None or not config.task_registry_path.is_file():
+            return ["- Parallel safety: registry unavailable"]
+        data = yaml.safe_load(config.task_registry_path.read_text(encoding="utf-8"))
+        if not isinstance(data, dict):
+            return []
+        queues = data.get("queues", {})
+        in_flight = list(queues.get("in_flight", []) or []) if isinstance(queues, dict) else []
+        tasks = data.get("tasks", [])
+        task_by_id = {
+            str(entry.get("id")): entry
+            for entry in tasks
+            if isinstance(entry, dict) and entry.get("id")
+        }
+        lines = ["- Parallel safety checklist:"]
+        if in_flight:
+            for tid in in_flight:
+                task = task_by_id.get(str(tid), {})
+                paths = task.get("planned_write_paths", []) or []
+                lines.append(
+                    f"  - peer {tid} owner={task.get('owner', '—')} paths={', '.join(map(str, paths)) or '—'}"
+                )
+        else:
+            lines.append("  - no in-flight peers")
+        ready = list(queues.get("ready_for_parallel", []) or []) if isinstance(queues, dict) else []
+        if ready and ctx.intent.id == "orchestrate_parallel":
+            lines.append(f"  - ready_for_parallel: {', '.join(map(str, ready))}")
+        locks = data.get("active_locks", data.get("locks", []))
+        if isinstance(locks, list) and locks:
+            lines.append("  - active locks:")
+            for lock in locks:
+                if isinstance(lock, dict):
+                    lines.append(f"    - {lock.get('path')} ({lock.get('task_id')})")
+        lines.append("  - confirm locks before READY_FOR_IMPLEMENTATION (`ordia task lock list`)")
+        return lines
+    except Exception:  # noqa: BLE001
+        return ["- Parallel safety: could not load TASK_REGISTRY"]
+
+
 def _checklist_lines(ctx: EmitContext) -> list[str]:
     lines: list[str] = []
+    lines.extend(_parallel_checklist_lines(ctx))
     for cmd in ctx.intent.related_commands:
         if cmd.startswith("ordia:"):
             lines.append(f"- npm run {cmd}")

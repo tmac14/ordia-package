@@ -29,6 +29,8 @@ ACTIVE_STATUSES = {
 }
 PACKET_REQUIRED_STATUSES = ACTIVE_STATUSES | {"WAITING_FOR_USER_DECISION", "PAUSED"}
 QUEUE_STATUS = {
+    "planning_pending": {"DISCOVERY", "PLAN_READY", "APPROVED"},
+    "locks_pending": {"LOCKS_PENDING", "LOCKS_CONFIRMED"},
     "in_flight": {"IN_FLIGHT", "IMPLEMENTED"},
     "ready_for_parallel": {"READY_FOR_IMPLEMENTATION"},
     "model_tier_pending": {"MODEL_TIER_APPROVED"},
@@ -36,6 +38,7 @@ QUEUE_STATUS = {
     "waiting_for_agent_report": {"WAITING_FOR_AGENT_REPORT"},
     "validation_pending": {"VALIDATION_PENDING"},
 }
+QUEUE_REQUIRED_STATUSES = set().union(*QUEUE_STATUS.values())
 DEFAULT_ALLOWED_STATUSES = sorted(
     ACTIVE_STATUSES
     | {"VALIDATED", "CLOSED", "PAUSED", "WAITING_FOR_USER_DECISION", "CANCELLED", "BLOCKED"}

@@ -89,6 +89,7 @@ class OrdiaConfig:
         "qa_evidence_roots",
         "orchestration_blocks_product",
         "unified_requires_approval",
+        "strict_parallel_paths",
         "closure_validator",
         "closure_strict",
         "tasks_max_in_flight_per_owner",
@@ -167,6 +168,7 @@ class OrdiaConfig:
                 DEFAULT_ENFORCEMENT["unifiedRequiresApproval"],
             )
         )
+        self.strict_parallel_paths = bool(enforcement.get("strictParallelPaths", False))
 
         closure = raw.get("closure") if isinstance(raw.get("closure"), dict) else {}
         self.closure_validator = str(closure.get("validator", "npm run ordia:validate"))

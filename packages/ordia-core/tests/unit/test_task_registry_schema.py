@@ -16,6 +16,8 @@ class TaskRegistrySchemaTests(unittest.TestCase):
             "queues": {
                 "in_flight": [],
                 "ready_for_parallel": [],
+                "planning_pending": [],
+                "locks_pending": [],
                 "model_tier_pending": [],
                 "waiting_for_user_decision": [],
                 "waiting_for_agent_report": [],
@@ -33,6 +35,8 @@ class TaskRegistrySchemaTests(unittest.TestCase):
             "queues": {
                 "in_flight": [],
                 "ready_for_parallel": [],
+                "planning_pending": [],
+                "locks_pending": [],
                 "model_tier_pending": [],
                 "waiting_for_user_decision": [],
                 "waiting_for_agent_report": [],

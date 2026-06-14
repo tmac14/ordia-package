@@ -28,6 +28,8 @@
       "required": [
         "in_flight",
         "ready_for_parallel",
+        "planning_pending",
+        "locks_pending",
         "model_tier_pending",
         "waiting_for_user_decision",
         "waiting_for_agent_report",
@@ -40,6 +42,8 @@
       "properties": {
         "in_flight": { "type": "array", "items": { "type": "string" } },
         "ready_for_parallel": { "type": "array", "items": { "type": "string" } },
+        "planning_pending": { "type": "array", "items": { "type": "string" } },
+        "locks_pending": { "type": "array", "items": { "type": "string" } },
         "model_tier_pending": { "type": "array", "items": { "type": "string" } },
         "waiting_for_user_decision": { "type": "array", "items": { "type": "string" } },
         "waiting_for_agent_report": { "type": "array", "items": { "type": "string" } },
@@ -82,6 +86,10 @@
         },
         "task_packet": { "type": "string" },
         "planned_write_paths": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "blocked_paths": {
           "type": "array",
           "items": { "type": "string" }
         },

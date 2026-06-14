@@ -35,6 +35,8 @@ No implementation before `APPROVED`, `LOCKS_CONFIRMED`, `MODEL_TIER_APPROVED` (w
 
 | Queue | Allowed statuses |
 |-------|------------------|
+| `planning_pending` | `DISCOVERY`, `PLAN_READY`, `APPROVED` |
+| `locks_pending` | `LOCKS_PENDING`, `LOCKS_CONFIRMED` |
 | `in_flight` | `IN_FLIGHT`, `IMPLEMENTED` |
 | `ready_for_parallel` | `READY_FOR_IMPLEMENTATION` |
 | `model_tier_pending` | `MODEL_TIER_APPROVED` |

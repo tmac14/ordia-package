@@ -1,0 +1,17 @@
+{
+  "name": "project-commands-demo",
+  "private": true,
+  "scripts": {
+    "ordia:validate": "ordia validate --project",
+    "dev": "vite",
+    "dev:web": "vite --open",
+    "db:migrate": "node scripts/migrate.js",
+    "db:seed": "node scripts/seed.js",
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down",
+    "tunnel:start": "cloudflared tunnel run",
+    "tunnel:stop": "cloudflared tunnel stop",
+    "quality:lint": "eslint .",
+    "quality:test": "vitest run"
+  }
+}

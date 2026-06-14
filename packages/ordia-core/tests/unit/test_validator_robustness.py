@@ -36,6 +36,8 @@ class ValidatorRobustnessTests(unittest.TestCase):
             "queues": {
                 "in_flight": ["TASK-LIMBO"],
                 "ready_for_parallel": [],
+                "planning_pending": [],
+                "locks_pending": [],
                 "model_tier_pending": [],
                 "waiting_for_user_decision": [],
                 "waiting_for_agent_report": [],
@@ -63,6 +65,8 @@ class ValidatorRobustnessTests(unittest.TestCase):
             "queues": {
                 "in_flight": ["TASK-LIMBO"],
                 "ready_for_parallel": [],
+                "planning_pending": [],
+                "locks_pending": [],
                 "model_tier_pending": [],
                 "waiting_for_user_decision": [],
                 "waiting_for_agent_report": [],
@@ -96,6 +100,8 @@ class ValidatorRobustnessTests(unittest.TestCase):
             "queues": {
                 "in_flight": ["T1", "T2"],
                 "ready_for_parallel": [],
+                "planning_pending": [],
+                "locks_pending": [],
                 "model_tier_pending": [],
                 "waiting_for_user_decision": [],
                 "waiting_for_agent_report": [],

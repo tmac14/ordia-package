@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ordia.dev/schemas/agent_registry.schema.json",
+  "title": "Ordia AGENT_REGISTRY",
+  "type": "object",
+  "required": ["schema_version", "updated_at", "agents"],
+  "additionalProperties": true,
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "updated_at": {
+      "type": "string",
+      "minLength": 1
+    },
+    "authority": {
+      "type": "object",
+      "additionalProperties": { "type": "string" }
+    },
+    "operational_identity_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "control_plane_runtimes": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/control_plane_runtime" }
+    },
+    "agents": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/agent" }
+    }
+  },
+  "$defs": {
+    "control_plane_runtime": {
+      "type": "object",
+      "required": ["id"],
+      "additionalProperties": true,
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "role": { "type": "string" },
+        "cursor_agent": { "type": "boolean" },
+        "multi_chat": { "type": "boolean" },
+        "protocols": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "agent": {
+      "type": "object",
+      "required": ["id", "role"],
+      "additionalProperties": true,
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+        "role": { "type": "string", "minLength": 1 },
+        "scopes": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "max_in_flight": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "excludes": {
+          "type": "string",
+          "minLength": 1
+        },
+        "runtime": {
+          "type": "string",
+          "enum": ["ONLY_CODEX", "CODEX_PLUS_CURSOR", "ONLY_CURSOR"]
+        },
+        "protocol": {
+          "type": "string",
+          "enum": ["ORCHESTRATION", "IMPLEMENTATION"]
+        }
+      }
+    }
+  }
+}

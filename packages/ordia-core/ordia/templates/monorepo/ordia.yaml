@@ -53,6 +53,10 @@ closure:
 #   maxInFlightPerOwner: 1
 #   strictInFlightLimits: false
 
+profileExtensions:
+  validateInventory: true
+  inventoryDoc: DOCUMENTATION_INVENTORY.md
+
 models:
   registry: docs/control/MODEL_REGISTRY.yaml
   telemetryRoot: temp/qa/model-usage

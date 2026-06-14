@@ -23,7 +23,7 @@ class OrdiaWheelTests(unittest.TestCase):
     def test_package_version_and_resources(self) -> None:
         import ordia  # noqa: WPS433
 
-        self.assertEqual(ordia.__version__, "0.14.0")
+        self.assertEqual(ordia.__version__, "0.15.0")
         template = CORE_ROOT / "ordia" / "templates" / "minimal" / "ordia.yaml"
         self.assertTrue(template.is_file(), "minimal template must ship in source tree")
         protocol = CORE_ROOT / "ordia" / "protocols" / "TASK_EXECUTION.md"

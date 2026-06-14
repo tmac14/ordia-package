@@ -29,7 +29,7 @@ Protocol: ORCHESTRATION
 ## Install
 
 ```powershell
-pip install ordia-core==0.14.0
+pip install ordia-core==0.15.0
 ```
 
 Bootstrap a new project:
@@ -90,4 +90,4 @@ See the [ordia-package repository](https://github.com/tmac14/ordia-package) for 
 
 ## Version
 
-Current release: **ordia-core 0.14.0**. See [CHANGELOG](https://github.com/tmac14/ordia-package/blob/main/packages/ordia-core/docs/CHANGELOG.md).
+Current release: **ordia-core 0.15.0**. See [CHANGELOG](https://github.com/tmac14/ordia-package/blob/main/packages/ordia-core/docs/CHANGELOG.md).

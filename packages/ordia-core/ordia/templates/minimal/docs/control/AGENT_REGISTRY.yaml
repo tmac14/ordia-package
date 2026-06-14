@@ -26,3 +26,6 @@ control_plane_runtimes:
       - "docs/control/protocols/RUNTIME_HANDOFF.md"
 
 agents: []
+
+# Monorepo template ships six agents — see templates/monorepo/docs/control/AGENT_REGISTRY.yaml
+# Example ids: agent-backend, agent-frontend, agent-data, agent-infra, agent-qa, agent-docs

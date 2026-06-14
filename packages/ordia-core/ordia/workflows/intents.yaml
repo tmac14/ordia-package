@@ -34,9 +34,21 @@ intents:
     mode: null
     template: control.md
     requires_task: true
-    related_commands: ["ordia:model:recommend", "ordia:prompt"]
+    related_commands: ["ordia:model:recommend", "ordia:prompt", "ordia:task-lock"]
     end_state: NEXT_PROMPT_READY
-    body_hint: Produce a self-contained IMPLEMENTATION prompt per orchestration protocol.
+    body_hint: Produce a self-contained IMPLEMENTATION prompt per orchestration protocol. Review parallel safety checklist (peers, locks, write-path collisions).
+
+  - id: orchestrate_parallel
+    category: control
+    title: Plan parallel executor batch from ready_for_parallel queue
+    runtimes: [ONLY_CURSOR, ONLY_CODEX, CODEX_PLUS_CURSOR]
+    protocol: ORCHESTRATION
+    mode: null
+    template: control.md
+    requires_task: false
+    related_commands: ["ordia:task-summary", "ordia:task-lock", "ordia validate --project"]
+    end_state: NEXT_PROMPT_READY
+    body_hint: Select non-colliding tasks from queues.ready_for_parallel; emit one prompt per agent with distinct planned_write_paths.
 
   - id: evaluate_plan
     category: control
@@ -170,6 +182,42 @@ intents:
     end_state: IMPLEMENTED_AND_VALIDATED
     body_hint: Deliver feature per acceptance criteria in task packet.
 
+  - id: modify_feature
+    category: work
+    title: Modify existing feature (scoped change)
+    runtimes: [ONLY_CURSOR, ONLY_CODEX, CODEX_PLUS_CURSOR]
+    protocol: IMPLEMENTATION
+    mode: Agent
+    template: work.md
+    requires_task: true
+    related_commands: ["ordia validate --project"]
+    end_state: IMPLEMENTED_AND_VALIDATED
+    body_hint: Change only what the task packet allows; preserve unrelated behavior and APIs.
+
+  - id: implement_ui
+    category: work
+    title: Implement UI components and visual changes
+    runtimes: [ONLY_CURSOR, ONLY_CODEX, CODEX_PLUS_CURSOR]
+    protocol: IMPLEMENTATION
+    mode: Agent
+    template: ui.md
+    requires_task: true
+    related_commands: ["ordia:model:recommend", "ordia validate --project"]
+    end_state: IMPLEMENTED_AND_VALIDATED
+    body_hint: Responsive layout, a11y, empty/loading/error states; follow ui.md checklist.
+
+  - id: implement_ux
+    category: work
+    title: Implement UX flow, copy, and usability improvements
+    runtimes: [ONLY_CURSOR, ONLY_CODEX, CODEX_PLUS_CURSOR]
+    protocol: IMPLEMENTATION
+    mode: Agent
+    template: ui.md
+    requires_task: true
+    related_commands: ["ordia validate --project"]
+    end_state: IMPLEMENTED_AND_VALIDATED
+    body_hint: Flow and copy focus; avoid business-logic changes outside task scope.
+
   - id: fix_bug
     category: work
     title: Fix bug with root-cause focus
@@ -252,4 +300,4 @@ intents:
     requires_task: true
     related_commands: ["ordia validate --project", "ordia validate --project --strict-model-report"]
     end_state: VALIDATED
-    body_hint: QA ACCEPT -> EVIDENCE_INDEX -> packet -> registry -> state -> ordia validate --project. Use ordia task transition --status VALIDATION_PENDING when proof is ready.
+    body_hint: QA ACCEPT -> EVIDENCE_INDEX -> packet -> registry -> state -> ordia validate --project. Use ordia task transition --status VALIDATION_PENDING when proof is ready. For UI tasks use implement_ui/implement_ux intents and qa with screenshots.

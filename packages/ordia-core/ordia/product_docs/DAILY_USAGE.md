@@ -2,7 +2,7 @@
 
 **Audience:** control-plane operators and implementers in Ordia-enabled projects  
 **CLI reference:** [packages/ordia-core/docs/CLI.md](https://github.com/tmac14/ordia-package/blob/main/packages/ordia-core/docs/CLI.md)  
-**Version:** v0.14.0 (protocol parity, manifest strict modes, plugin example)
+**Version:** v0.15.0 (parallel orchestration, docs audit, L1–L3 catalog, UI/UX intents)
 
 ---
 
@@ -59,6 +59,31 @@ Paste the full output into the chat. It includes header, recovery checklist, and
 | Health check | `ordia doctor` |
 | Describe one intent | `ordia workflow describe fix_bug` |
 | Initialize scaffold | `ordia init --with-cursor` |
+
+| Docs adoption audit | `ordia docs audit --write-report` |
+| Brownfield + audit | `ordia init --skip-existing --audit-docs` |
+| Manage path locks | `ordia task lock add --task <ID> --path <PATH>` |
+
+---
+
+## Workflow intent taxonomy
+
+```text
+discover → plan → [fix_bug | implement_feature | modify_feature | implement_ui | implement_ux | refactor]
+  → validate → qa → close_task
+```
+
+| Work type | Intent | When to use |
+|-----------|--------|-------------|
+| Diagnosis only | `discover` | Read-only; no product edits |
+| New capability | `implement_feature` | Greenfield feature with new acceptance criteria |
+| Scoped change | `modify_feature` | Adjust existing feature; preserve unrelated behavior |
+| Visual/components | `implement_ui` | Layout, components, styling, responsive/a11y |
+| Flow/copy/usability | `implement_ux` | User journeys and copy; minimal logic change |
+| Defect | `fix_bug` | Root-cause fix + regression test when applicable |
+| No behavior change | `refactor` | Structure only per task packet |
+| Generic slice | `implement` | When no specialized intent fits |
+| Parallel batch | `orchestrate_parallel` | Multiple tasks from `ready_for_parallel` |
 
 ---
 

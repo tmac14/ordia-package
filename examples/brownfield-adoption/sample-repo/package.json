@@ -1,0 +1,11 @@
+{
+  "name": "sample-brownfield",
+  "private": true,
+  "scripts": {
+    "dev": "vite",
+    "dev:web": "vite --open",
+    "db:migrate": "node scripts/migrate.js",
+    "tunnel:start": "cloudflared tunnel run",
+    "tunnel:stop": "cloudflared tunnel stop"
+  }
+}

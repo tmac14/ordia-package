@@ -8,6 +8,7 @@ from typing import Any
 
 from ordia.config import OrdiaConfig, load_ordia_config
 from ordia.validator.common import Validation
+from ordia.validator.parallel import collect_write_paths, paths_overlap
 from ordia.validator.project import load_yaml_file
 
 
@@ -52,24 +53,44 @@ def _task_by_id(registry: dict[str, Any]) -> dict[str, dict[str, Any]]:
     return mapping
 
 
-def _active_locks(registry: dict[str, Any], active_task_id: str | None) -> list[dict[str, str]]:
-    locks = registry.get("locks", [])
-    if not isinstance(locks, list) or not active_task_id or active_task_id in {"NONE", "NONE_SELECTED_FOR_NEXT_TASK"}:
+def _all_locks(registry: dict[str, Any]) -> list[dict[str, str]]:
+    locks = registry.get("active_locks", registry.get("locks", []))
+    if not isinstance(locks, list):
         return []
     rows: list[dict[str, str]] = []
     for lock in locks:
         if not isinstance(lock, dict):
             continue
-        holder = str(lock.get("task_id", lock.get("holder", "")))
-        if holder == active_task_id:
-            rows.append(
-                {
-                    "path": str(lock.get("path", "")),
-                    "task_id": holder,
-                    "reason": str(lock.get("reason", "")),
-                }
-            )
+        rows.append(
+            {
+                "path": str(lock.get("path", "")),
+                "task_id": str(lock.get("task_id", lock.get("holder", ""))),
+                "reason": str(lock.get("reason", "")),
+            }
+        )
     return rows
+
+
+def _path_collisions(in_flight: list[dict[str, Any]]) -> list[str]:
+    collisions: list[str] = []
+    for left in in_flight:
+        left_paths = collect_write_paths(left)
+        for right in in_flight:
+            if right is left:
+                continue
+            for lp in left_paths:
+                for rp in collect_write_paths(right):
+                    if paths_overlap(lp, rp):
+                        collisions.append(f"{left['id']}:{lp} ↔ {right['id']}:{rp}")
+    return collisions
+
+
+def _owner_counts(in_flight: list[dict[str, Any]]) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    for row in in_flight:
+        owner = str(row.get("owner") or "Unassigned")
+        counts[owner] = counts.get(owner, 0) + 1
+    return counts
 
 
 def _packet_next_safe_action(packet_path: Path) -> str | None:
@@ -119,7 +140,9 @@ def build_task_summary(root: Path, config: OrdiaConfig | None = None) -> dict[st
         packet_path = cfg.task_packets_dir / f"{active_id}.md"
         packet_next = _packet_next_safe_action(packet_path)
 
-    locks = _active_locks(registry, str(active_id) if active_id else None)
+    locks = _all_locks(registry)
+    collisions = _path_collisions(in_flight)
+    owner_counts = _owner_counts(in_flight)
 
     return {
         "profile": cfg.profile,
@@ -128,6 +151,8 @@ def build_task_summary(root: Path, config: OrdiaConfig | None = None) -> dict[st
         "in_flight": in_flight,
         "active_task": active_task,
         "active_locks": locks,
+        "path_collisions": collisions,
+        "owner_counts": owner_counts,
         "packet_next_safe_action": packet_next,
         "registry_updated_at": registry.get("updated_at"),
         "load_errors": list(validation.errors),
@@ -162,7 +187,19 @@ def format_task_summary_text(summary: dict[str, Any]) -> str:
     if locks:
         lines.append("- active_locks:")
         for lock in locks:
-            lines.append(f"  - {lock.get('path')} ({lock.get('reason')})")
+            lines.append(f"  - {lock.get('path')} task={lock.get('task_id')} ({lock.get('reason') or '—'})")
+
+    collisions = summary.get("path_collisions", [])
+    if collisions:
+        lines.append("- path_collisions:")
+        for item in collisions:
+            lines.append(f"  - {item}")
+
+    owner_counts = summary.get("owner_counts", {})
+    if owner_counts:
+        lines.append("- owner_counts:")
+        for owner, count in sorted(owner_counts.items()):
+            lines.append(f"  - {owner}: {count}")
 
     if summary.get("packet_next_safe_action"):
         lines.append(f"- packet next_safe_action: {summary['packet_next_safe_action']}")

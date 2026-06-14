@@ -356,7 +356,61 @@ def cmd_init(args: argparse.Namespace) -> int:
         print("- installed package documentation under docs/ordia/package/")
     if protocol_written:
         print(f"- installed {len(protocol_written)} protocol templates under docs/control/protocols/")
+    if getattr(args, "audit_docs", False):
+        from ordia.adoption.audit import format_adoption_report, format_inventory_markdown, run_docs_audit
+        from ordia.commands.catalog import resolve_catalog_paths
+
+        cfg = load_ordia_config(target)
+        catalog_path, _ = resolve_catalog_paths(target, cfg)
+        audit = run_docs_audit(target, catalog_path=catalog_path)
+        control_dir = target / audit.suggested_control_root
+        control_dir.mkdir(parents=True, exist_ok=True)
+        report_path = control_dir / "ADOPTION_REPORT.md"
+        report_path.write_text(format_adoption_report(audit), encoding="utf-8")
+        print(f"- wrote {report_path.relative_to(target)} (docs audit)")
+        if getattr(args, "write_inventory", False):
+            inv_path = control_dir / "DOCUMENTATION_INVENTORY.md"
+            inv_path.write_text(format_inventory_markdown(audit), encoding="utf-8")
+            print(f"- wrote {inv_path.relative_to(target)}")
     print("Next: ordia validate")
+    return 0
+
+
+def cmd_docs_audit(args: argparse.Namespace) -> int:
+    from ordia.adoption.audit import format_adoption_report, format_inventory_markdown, run_docs_audit
+    from ordia.commands.catalog import resolve_catalog_paths
+    from ordia.output import OrdiaReport, emit_json
+
+    root = Path(args.directory).resolve()
+    cfg = load_ordia_config(root)
+    catalog_path, _ = resolve_catalog_paths(root, cfg)
+    audit = run_docs_audit(root, catalog_path=catalog_path)
+    if getattr(args, "write_report", False):
+        control_dir = root / audit.suggested_control_root
+        control_dir.mkdir(parents=True, exist_ok=True)
+        report_path = control_dir / "ADOPTION_REPORT.md"
+        report_path.write_text(format_adoption_report(audit), encoding="utf-8")
+    if getattr(args, "write_inventory", False):
+        control_dir = root / audit.suggested_control_root
+        control_dir.mkdir(parents=True, exist_ok=True)
+        inv_path = control_dir / "DOCUMENTATION_INVENTORY.md"
+        inv_path.write_text(format_inventory_markdown(audit), encoding="utf-8")
+    if args.json:
+        emit_json(
+            OrdiaReport(
+                command="docs audit",
+                ordia_version=__version__,
+                ok=True,
+                metadata=audit.to_dict(),
+            )
+        )
+        return 0
+    if getattr(args, "write_report", False):
+        print(f"Wrote {audit.suggested_control_root}/ADOPTION_REPORT.md")
+    if getattr(args, "write_inventory", False):
+        print(f"Wrote {audit.suggested_control_root}/DOCUMENTATION_INVENTORY.md")
+    if not getattr(args, "write_report", False):
+        print(format_adoption_report(audit))
     return 0
 
 
@@ -897,6 +951,53 @@ def cmd_task_transition(args: argparse.Namespace) -> int:
     return 0 if result.ok else 1
 
 
+def cmd_task_lock(args: argparse.Namespace) -> int:
+    from ordia.output import OrdiaReport, emit_json
+    from ordia.tasks.locks import add_lock, format_lock_text, list_locks, release_lock
+
+    root = Path(args.directory).resolve()
+    action = args.lock_cmd
+    if action == "list":
+        result = list_locks(root, task_id=getattr(args, "task", None))
+    elif action == "add":
+        result = add_lock(
+            root,
+            task_id=args.task,
+            path=args.path,
+            reason=getattr(args, "reason", "") or "",
+            dry_run=bool(getattr(args, "dry_run", False)),
+        )
+    else:
+        result = release_lock(
+            root,
+            task_id=args.task,
+            path=args.path,
+            dry_run=bool(getattr(args, "dry_run", False)),
+        )
+    if args.json:
+        emit_json(
+            OrdiaReport(
+                command=f"task lock {action}",
+                ordia_version=__version__,
+                ok=result.ok,
+                issues=list(result.errors),
+                metadata={
+                    "task_id": result.task_id,
+                    "path": result.path,
+                    "action": result.action,
+                    "locks": result.locks,
+                    "dry_run": result.dry_run,
+                },
+            )
+        )
+        return 0 if result.ok else 1
+    if result.errors:
+        print(format_lock_text(result), file=sys.stderr)
+        return 1
+    print(format_lock_text(result))
+    return 0
+
+
 def cmd_doctor(args: argparse.Namespace) -> int:
     root = Path(args.directory).resolve()
     issues: list[str] = []
@@ -1031,7 +1132,26 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Copy only missing scaffold files; keep existing ordia.yaml and registries",
     )
+    init_parser.add_argument(
+        "--audit-docs",
+        action="store_true",
+        help="After scaffold, scan repo and write ADOPTION_REPORT.md under control root",
+    )
+    init_parser.add_argument(
+        "--write-inventory",
+        action="store_true",
+        help="With --audit-docs, also write DOCUMENTATION_INVENTORY.md",
+    )
     init_parser.set_defaults(func=cmd_init)
+
+    docs_parser = sub.add_parser("docs", help="Documentation adoption utilities", parents=[root_parent])
+    docs_sub = docs_parser.add_subparsers(dest="docs_cmd", required=True)
+    docs_audit = docs_sub.add_parser("audit", help="Full-repo documentation and config audit", parents=[root_parent])
+    docs_audit.add_argument("--json", action="store_true", help="Emit JSON report")
+    docs_audit.add_argument("--write-report", action="store_true", help="Write ADOPTION_REPORT.md")
+    docs_audit.add_argument("--write-inventory", action="store_true", help="Write DOCUMENTATION_INVENTORY.md")
+    docs_audit.add_argument("--deep", action="store_true", help="Reserved for extended scans (currently same as default)")
+    docs_audit.set_defaults(func=cmd_docs_audit)
 
     validate_parser = sub.add_parser("validate", help="Validate ordia.yaml and control paths", parents=[root_parent])
     validate_parser.add_argument(
@@ -1168,6 +1288,25 @@ def build_parser() -> argparse.ArgumentParser:
     task_transition.add_argument("--dry-run", action="store_true", help="Plan transition without writing files")
     task_transition.add_argument("--json", action="store_true", help="Emit JSON report")
     task_transition.set_defaults(func=cmd_task_transition)
+    task_lock = task_sub.add_parser("lock", help="Manage parallel-safety locks in TASK_REGISTRY")
+    lock_sub = task_lock.add_subparsers(dest="lock_cmd", required=True)
+    lock_list = lock_sub.add_parser("list", help="List active locks", parents=[root_parent])
+    lock_list.add_argument("--task", help="Filter by task ID")
+    lock_list.add_argument("--json", action="store_true", help="Emit JSON report")
+    lock_list.set_defaults(func=cmd_task_lock)
+    lock_add = lock_sub.add_parser("add", help="Add a path lock for a task", parents=[root_parent])
+    lock_add.add_argument("--task", required=True, help="Task ID")
+    lock_add.add_argument("--path", required=True, help="Locked path (repo-relative)")
+    lock_add.add_argument("--reason", help="Lock reason")
+    lock_add.add_argument("--dry-run", action="store_true", help="Plan without writing registry")
+    lock_add.add_argument("--json", action="store_true", help="Emit JSON report")
+    lock_add.set_defaults(func=cmd_task_lock)
+    lock_release = lock_sub.add_parser("release", help="Release a path lock", parents=[root_parent])
+    lock_release.add_argument("--task", required=True, help="Task ID")
+    lock_release.add_argument("--path", required=True, help="Locked path")
+    lock_release.add_argument("--dry-run", action="store_true", help="Plan without writing registry")
+    lock_release.add_argument("--json", action="store_true", help="Emit JSON report")
+    lock_release.set_defaults(func=cmd_task_lock)
 
     help_parser = sub.add_parser("help", help="Command catalog overview, list, or detail", parents=[root_parent])
     help_parser.add_argument(

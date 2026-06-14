@@ -11,6 +11,69 @@ from ordia.commands.schema import validate_catalog_structure
 
 EXCLUDED_SCRIPTS = frozenset({"help", "help:validate", "help:list"})
 
+DOMAIN_SECTIONS = {
+    "ordia": ("ordia", "Ordia control plane", "L1"),
+    "control": ("control", "Control plane adapters", "L1"),
+    "help": ("help", "Command discovery", "L1"),
+    "quality": ("quality", "Quality gates", "L2"),
+    "lint": ("quality", "Lint", "L2"),
+    "typecheck": ("quality", "Typecheck", "L2"),
+    "format": ("quality", "Format", "L2"),
+    "dev": ("dev", "Development servers", "L3"),
+    "db": ("db", "Database", "L3"),
+    "docker": ("docker", "Docker", "L3"),
+    "tunnel": ("tunnel", "Tunnels", "L3"),
+    "audit": ("audit", "Audits", "L3"),
+    "test": ("test", "Tests", "L3"),
+    "pack": ("pack", "Packaging", "L3"),
+}
+
+
+def classify_script(name: str) -> tuple[str, str, str]:
+    """Return (section_id, layer, domain)."""
+    if ":" not in name:
+        if name.startswith("ordia"):
+            return "ordia", "L1", "ordia"
+        return "root", "L3", "other"
+    prefix = name.split(":", 1)[0] + ":"
+    for key, (section_id, _title, layer) in DOMAIN_SECTIONS.items():
+        if prefix == f"{key}:" or name.startswith(f"{key}:"):
+            return section_id, layer, key
+    section = name.split(":", 1)[0]
+    return section, "L3", section
+
+
+def _workflow_intents_from_core() -> list[dict[str, str]]:
+    try:
+        import yaml
+
+        intents_path = Path(__file__).resolve().parent.parent / "workflows" / "intents.yaml"
+        data = yaml.safe_load(intents_path.read_text(encoding="utf-8"))
+        rows: list[dict[str, str]] = []
+        for intent in data.get("intents", []) or []:
+            if not isinstance(intent, dict) or not intent.get("id"):
+                continue
+            rows.append(
+                {
+                    "goal": str(intent.get("title", intent["id"])),
+                    "intent": str(intent["id"]),
+                    "emitCommand": f"ordia prompt emit --intent {intent['id']}",
+                }
+            )
+        return rows
+    except Exception:  # noqa: BLE001
+        return []
+
+
+def _ordia_cli_command(name: str, description: str, command: str, *, layer: str = "L1") -> dict[str, Any]:
+    return {
+        "name": name,
+        "description": description,
+        "command": command,
+        "layer": layer,
+        "domain": "ordia",
+    }
+
 
 def resolve_catalog_paths(
     root: Path,
@@ -133,31 +196,41 @@ def seed_catalog_from_package(
 ) -> int:
     """Create or update commands.catalog.json from package.json scripts."""
     scripts = load_package_scripts(package_path)
-    commands = []
+    section_commands: dict[str, list[dict[str, Any]]] = {}
+    section_meta: dict[str, tuple[str, str]] = {}
     for name in sorted(scripts):
         if name in EXCLUDED_SCRIPTS:
             continue
-        commands.append(
+        section_id, layer, domain = classify_script(name)
+        title = DOMAIN_SECTIONS.get(domain, (section_id, section_id.title(), layer))[1]
+        section_meta[section_id] = (title, layer)
+        section_commands.setdefault(section_id, []).append(
             {
                 "name": name,
-                "description": f"npm script `{name}` (seeded from package.json)",
+                "description": f"npm script `{name}`",
                 "command": f"npm run {name}",
+                "layer": layer,
+                "domain": domain,
             }
         )
+    sections = [
+        {
+            "id": section_id,
+            "title": section_meta[section_id][0],
+            "layer": section_meta[section_id][1],
+            "commands": section_commands[section_id],
+        }
+        for section_id in sorted(section_commands)
+    ]
     catalog: dict[str, Any] = {
-        "meta": {"version": 1, "profile": profile},
-        "sections": [
-            {
-                "id": "root",
-                "title": "Root scripts",
-                "commands": commands,
-            }
-        ],
+        "meta": {"version": 1, "profile": profile, "generatedBy": "ordia init --sync-commands"},
+        "sections": sections,
         "quickFlows": [],
+        "workflowIntents": _workflow_intents_from_core(),
     }
     catalog_path.parent.mkdir(parents=True, exist_ok=True)
     catalog_path.write_text(json.dumps(catalog, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
-    return len(commands)
+    return sum(len(section["commands"]) for section in sections)
 
 
 def seed_pip_catalog_stub(
@@ -178,39 +251,61 @@ def seed_pip_catalog_stub(
                     "Optional npm wrappers can be added to package.json and synced with ordia init --sync-commands",
                 ],
                 "commands": [
-                    {
-                        "name": "ordia:doctor",
-                        "description": "Check Ordia setup, hooks, and dependencies",
-                        "command": "ordia doctor",
-                    },
-                    {
-                        "name": "ordia:validate",
-                        "description": "Validate manifest and control-plane registries",
-                        "command": "ordia validate --project",
-                    },
-                    {
-                        "name": "ordia:task-summary",
-                        "description": "Summarize in-flight tasks, active state, and locks",
-                        "command": "ordia task summary",
-                    },
-                    {
-                        "name": "ordia:task-transition",
-                        "description": "Atomically update task status, queues, and ORCHESTRATION_STATE",
-                        "command": "ordia task transition --task <TASK-ID> --status <STATUS>",
-                    },
-                    {
-                        "name": "ordia:prompt-recover",
-                        "description": "Emit recovery bootstrap prompt block",
-                        "command": "ordia prompt emit --intent recover",
-                    },
+                    _ordia_cli_command("ordia:doctor", "Check Ordia setup, hooks, and dependencies", "ordia doctor"),
+                    _ordia_cli_command(
+                        "ordia:validate",
+                        "Validate manifest and control-plane registries",
+                        "ordia validate --project",
+                    ),
+                    _ordia_cli_command(
+                        "ordia:task-summary",
+                        "Summarize in-flight tasks, active state, and locks",
+                        "ordia task summary",
+                    ),
+                    _ordia_cli_command(
+                        "ordia:task-transition",
+                        "Atomically update task status, queues, and ORCHESTRATION_STATE",
+                        "ordia task transition --task <TASK-ID> --status <STATUS>",
+                    ),
+                    _ordia_cli_command(
+                        "ordia:task-lock",
+                        "Manage parallel-safety locks",
+                        "ordia task lock list",
+                    ),
+                    _ordia_cli_command(
+                        "ordia:workflow-list",
+                        "List workflow intents",
+                        "ordia workflow list",
+                    ),
+                    _ordia_cli_command(
+                        "ordia:prompt",
+                        "Emit standardized prompt blocks",
+                        "ordia prompt emit --intent <ID> --task <TASK-ID>",
+                    ),
+                    _ordia_cli_command(
+                        "ordia:model-recommend",
+                        "Recommend model tier for task",
+                        "ordia model recommend --task <TASK-ID>",
+                    ),
+                    _ordia_cli_command(
+                        "ordia:docs-audit",
+                        "Audit repository docs and configs for adoption",
+                        "ordia docs audit --write-report",
+                    ),
+                    _ordia_cli_command(
+                        "ordia:prompt-recover",
+                        "Emit recovery bootstrap prompt block",
+                        "ordia prompt emit --intent recover",
+                    ),
                 ],
             }
         ],
         "quickFlows": [
             {"goal": "Bootstrap recovery", "command": "ordia prompt emit --intent recover"},
             {"goal": "Validate control plane", "command": "ordia validate --project"},
+            {"goal": "Audit adoption", "command": "ordia docs audit --write-report"},
         ],
-        "workflowIntents": [],
+        "workflowIntents": _workflow_intents_from_core(),
     }
     catalog_path.parent.mkdir(parents=True, exist_ok=True)
     catalog_path.write_text(json.dumps(catalog, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
