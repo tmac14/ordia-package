@@ -36,8 +36,32 @@ DEFAULT_CONTROL = {
     "decisionLog": "DECISION_LOG.md",
     "evidenceIndex": "EVIDENCE_INDEX.md",
     "taskPackets": "tasks",
-    "projectProfile": "AGENTS.md",
+    "projectProfile": "PROFILE.md",
 }
+
+
+def _resolve_control_relative(control_root: Path, repo_root: Path, rel: str) -> Path:
+    """Resolve manifest path relative to control root unless repo-anchored."""
+    text = str(rel).replace("\\", "/").strip().lstrip("./")
+    if not text:
+        return control_root
+    repo_anchored_prefixes = ("docs/", "scripts/", "apps/", "temp/", ".cursor/")
+    if any(text.startswith(prefix) for prefix in repo_anchored_prefixes):
+        return repo_root / text
+    return control_root / text
+
+
+def _resolve_project_profile(
+    control_root: Path, repo_root: Path, profile_rel: str
+) -> Path:
+    candidate = _resolve_control_relative(control_root, repo_root, profile_rel)
+    if profile_rel.replace("\\", "/").strip() == "AGENTS.md":
+        if candidate.is_file():
+            return candidate
+        legacy = repo_root / "AGENTS.md"
+        if legacy.is_file():
+            return legacy
+    return candidate
 
 
 class OrdiaConfig:
@@ -63,6 +87,7 @@ class OrdiaConfig:
         "unified_requires_approval",
         "closure_validator",
         "commands_catalog",
+        "commands_profile_doc",
         "commands_npm_package",
         "commands_validate_on_control_check",
         "models_registry_path",
@@ -99,8 +124,10 @@ class OrdiaConfig:
         self.task_packets_dir = self.control_root / str(
             control.get("taskPackets", DEFAULT_CONTROL["taskPackets"])
         )
-        self.project_profile_path = self.root / str(
-            control.get("projectProfile", DEFAULT_CONTROL["projectProfile"])
+        self.project_profile_path = _resolve_project_profile(
+            self.control_root,
+            self.root,
+            str(control.get("projectProfile", DEFAULT_CONTROL["projectProfile"])),
         )
 
         session = raw.get("session") if isinstance(raw.get("session"), dict) else {}
@@ -137,6 +164,15 @@ class OrdiaConfig:
         commands = raw.get("commands") if isinstance(raw.get("commands"), dict) else {}
         catalog = str(commands.get("catalog", "")).strip()
         self.commands_catalog = catalog or None
+        profile_doc = str(commands.get("profileDoc", "")).strip()
+        if profile_doc:
+            self.commands_profile_doc = _resolve_control_relative(
+                self.control_root, self.root, profile_doc
+            )
+        elif self.commands_catalog:
+            self.commands_profile_doc = self.control_root / "COMMANDS.md"
+        else:
+            self.commands_profile_doc = None
         self.commands_npm_package = str(commands.get("npmPackage", "package.json")).strip() or "package.json"
         self.commands_validate_on_control_check = bool(commands.get("validateOnControlCheck", False))
 
@@ -147,6 +183,11 @@ class OrdiaConfig:
         self.models_telemetry_root = self.root / telemetry_rel.replace("\\", "/")
         self.models_default_tier = str(models.get("defaultTier", "T1")).strip().upper() or "T1"
         self.models_require_approval_above = str(models.get("requireApprovalAbove", "T1")).strip().upper() or "T1"
+
+    def commands_catalog_path(self) -> Path | None:
+        if not self.commands_catalog:
+            return None
+        return _resolve_control_relative(self.control_root, self.root, self.commands_catalog)
 
 
 def _as_str_list(value: Any) -> list[str]:
@@ -258,10 +299,16 @@ def validate_ordia_manifest(config: OrdiaConfig, errors: list[str], warnings: li
         errors.append(f"ordia.yaml version {config.version!r} is not supported (expected 0.2 or 0.3)")
 
     if config.commands_catalog:
-        catalog_path = config.root / config.commands_catalog
+        catalog_path = config.commands_catalog_path()
+        assert catalog_path is not None
         if not catalog_path.is_file():
             warnings.append(
                 f"ordia.yaml commands.catalog path missing: {catalog_path.relative_to(config.root)}"
+            )
+        if config.commands_profile_doc and not config.commands_profile_doc.is_file():
+            warnings.append(
+                "ordia.yaml commands.profileDoc path missing: "
+                f"{config.commands_profile_doc.relative_to(config.root)}"
             )
         npm_path = config.root / config.commands_npm_package
         if not npm_path.is_file():

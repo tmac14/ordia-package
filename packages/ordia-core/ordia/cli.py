@@ -677,6 +677,11 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Copy live docs/ordia/ from reference repo instead of bundled portable product_docs (reference only)",
     )
+    init_parser.add_argument(
+        "--sync-commands",
+        action="store_true",
+        help="Best-effort: seed commands.catalog.json from package.json scripts when present",
+    )
     init_parser.add_argument("--force", action="store_true", help="Allow init when ordia.yaml exists")
     init_parser.set_defaults(func=cmd_init)
 

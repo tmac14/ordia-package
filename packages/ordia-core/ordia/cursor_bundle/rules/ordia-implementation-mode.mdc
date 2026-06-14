@@ -38,7 +38,7 @@ Ensure workspace root is the project directory before editing.
 
 ## Autonomy
 
-Iterate within scope until Definition of Done: targeted tests, regressions, build, metrics, QA as required. Use **only** commands from `COMMANDS.md`.
+Iterate within scope until Definition of Done: targeted tests, regressions, build, metrics, QA as required. Use **only** commands documented in `{controlRoot}/COMMANDS.md` (or `{controlRoot}/{commands.profileDoc}` from the manifest).
 
 ## Forbidden
 

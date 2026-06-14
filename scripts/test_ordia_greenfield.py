@@ -11,7 +11,9 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 CLI = ROOT / "scripts" / "ordia_cli.py"
-RECOVERY_RULE = ROOT / ".cursor" / "rules" / "ordia-recovery-bootstrap.mdc"
+RECOVERY_RULE = ROOT / "packages" / "ordia-core" / "ordia" / "cursor_bundle" / "rules" / "ordia-recovery-bootstrap.mdc"
+if not RECOVERY_RULE.is_file():
+    RECOVERY_RULE = ROOT / ".cursor" / "rules" / "ordia-recovery-bootstrap.mdc"
 if not RECOVERY_RULE.is_file():
     RECOVERY_RULE = (
         ROOT / "packages" / "ordia-cursor" / "templates" / "rules" / "ordia-recovery-bootstrap.mdc"
@@ -130,19 +132,34 @@ class OrdiaGreenfieldTests(unittest.TestCase):
             )
             self.assertEqual(probe.returncode, 0, probe.stderr or probe.stdout)
 
+    def test_greenfield_scaffold_includes_profile_commands_catalog_tasks(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            target = Path(tmp)
+            init = self._init(target, "--with-cursor", "--profile", "gf-scaffold")
+            self.assertEqual(init.returncode, 0, init.stderr or init.stdout)
+            control = target / "docs" / "control"
+            for name in ("PROFILE.md", "COMMANDS.md", "commands.catalog.json"):
+                self.assertTrue((control / name).is_file(), f"missing {name}")
+            self.assertTrue((control / "tasks").is_dir(), "tasks/ directory missing")
+            manifest = (target / "ordia.yaml").read_text(encoding="utf-8")
+            self.assertIn('version: "0.3"', manifest)
+            self.assertIn("projectProfile: PROFILE.md", manifest)
+            self.assertIn("profileDoc: COMMANDS.md", manifest)
+
     def test_greenfield_agents_template_documents_control_root(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             target = Path(tmp)
             init = self._init(target, "--profile", "gf-test")
             self.assertEqual(init.returncode, 0, init.stderr or init.stdout)
             agents = (target / "AGENTS.md").read_text(encoding="utf-8")
-            self.assertIn("{controlRoot}", agents)
+            self.assertIn("PROFILE.md", agents)
             self.assertIn("docs/control/", agents)
 
     def test_recovery_rule_is_manifest_driven(self) -> None:
         text = RECOVERY_RULE.read_text(encoding="utf-8")
         self.assertIn("manifest-driven", text.lower())
         self.assertIn("{controlRoot}/ORCHESTRATION_STATE.md", text)
+        self.assertIn("{projectProfile}", text)
 
 
     def test_greenfield_validate_project_cli(self) -> None:

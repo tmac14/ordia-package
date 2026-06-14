@@ -1,5 +1,5 @@
 # Ordia greenfield template — render with ordia init
-version: "0.2"
+version: "0.3"
 profile: "{{PROFILE}}"
 
 control:
@@ -10,7 +10,13 @@ control:
   decisionLog: DECISION_LOG.md
   evidenceIndex: EVIDENCE_INDEX.md
   taskPackets: tasks
-  projectProfile: AGENTS.md
+  projectProfile: PROFILE.md
+
+commands:
+  catalog: commands.catalog.json
+  profileDoc: COMMANDS.md
+  npmPackage: package.json
+  validateOnControlCheck: false
 
 session:
   runtimes:

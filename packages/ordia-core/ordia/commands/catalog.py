@@ -6,7 +6,7 @@ import json
 from pathlib import Path
 from typing import Any
 
-from ordia.config import OrdiaConfig
+from ordia.config import OrdiaConfig, _resolve_control_relative
 from ordia.commands.schema import validate_catalog_structure
 
 EXCLUDED_SCRIPTS = frozenset({"help", "help:validate", "help:list"})
@@ -20,12 +20,23 @@ def resolve_catalog_paths(
     npm_package: str | None = None,
 ) -> tuple[Path, Path]:
     if config is not None:
-        catalog_rel = catalog or config.commands_catalog or "scripts/commands.catalog.json"
+        catalog_path = (
+            config.commands_catalog_path()
+            if catalog is None
+            else _resolve_catalog_override(root, config, catalog)
+        )
         npm_rel = npm_package or config.commands_npm_package or "package.json"
+        if catalog_path is None:
+            control_root = config.control_root
+            catalog_path = control_root / "commands.catalog.json"
     else:
-        catalog_rel = catalog or "scripts/commands.catalog.json"
+        catalog_path = root / (catalog or "docs/control/commands.catalog.json")
         npm_rel = npm_package or "package.json"
-    return root / catalog_rel, root / npm_rel
+    return catalog_path, root / npm_rel
+
+
+def _resolve_catalog_override(root: Path, config: OrdiaConfig, catalog: str) -> Path:
+    return _resolve_control_relative(config.control_root, root, catalog)
 
 
 def load_catalog(path: Path) -> dict[str, Any]:

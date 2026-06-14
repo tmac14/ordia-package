@@ -22,6 +22,28 @@ auditors tracing when behavior changed.
 
 ---
 
+## [0.9.0] — 2026-06-14
+
+**Program:** Ordia v0.9 — professional init scaffold + profile under control root (`ORDIA-D025`)
+
+### Added
+
+- **`docs/control/PROFILE.md`** stub in greenfield templates (domain profile; root `AGENTS.md` is bootstrap only)
+- **`docs/control/COMMANDS.md`** and **`docs/control/commands.catalog.json`** stubs
+- **`docs/control/tasks/`** directory scaffold (`.gitkeep`)
+- Manifest v0.3 **`commands.profileDoc`** — command overlay path relative to `control.root`
+- **`--sync-commands`** init flag (stub for future catalog seeding from `package.json`)
+- Recovery bootstrap reads **`{controlRoot}/{projectProfile}`** and **`{controlRoot}/{commands.profileDoc}`** from manifest
+
+### Changed
+
+- **`control.projectProfile`** default **`PROFILE.md`** under `control.root` (legacy root `AGENTS.md` still resolved when present)
+- **`commands.catalog`** resolves under `control.root` by default (`commands.catalog.json`)
+- Greenfield templates emit manifest **`version: "0.3"`**
+- Inline **`ordia_manifest.py`** exposes `project_profile_path` and `commands_profile_doc_path`
+
+---
+
 ## [0.8.0] — 2026-06-14
 
 **Program:** Ordia v0.8 — workflow intents + documentation closeout (`ORDIA-D023`)
