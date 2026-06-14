@@ -16,7 +16,8 @@ jobs:
       - run: python -m pip install -U pip
       - run: pip install -e "packages/ordia-core[dev]"
       - run: python tools/sync_cursor_bundle.py --check --product-only
-      - run: pytest packages/ordia-core/tests -m "not wheel" --cov-fail-under=70
+      - run: python tools/verify_version_parity.py --check
+      - run: pytest packages/ordia-core/tests -m "not wheel" --cov-fail-under=80
       - run: pytest packages/ordia-core/tests -m wheel
       - run: python tools/audits/product_docs_sync.py --check
       - run: python tools/audits/docs_links.py --strict
@@ -55,4 +56,3 @@ jobs:
       - uses: pypa/gh-action-pypi-publish@release/v1
         with:
           packages-dir: dist/
-          password: ${{ secrets.PYPI_API_TOKEN }}

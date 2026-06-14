@@ -452,6 +452,10 @@ def validate_project(
             profile_registry=model_profile,
         )
 
+    from ordia.plugins.loader import run_profile_validators
+
+    run_profile_validators(root, cfg, result, options=opts, strict=opts.strict_profile)
+
     if opts.require_cursor_workspace or opts.profile_cursor_rules:
         validate_cursor_workspace(root, opts, result)
 

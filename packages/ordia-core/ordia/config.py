@@ -12,6 +12,7 @@ except ImportError:  # pragma: no cover - validator installs PyYAML
 
 ORDIA_FILENAME = "ordia.yaml"
 SUPPORTED_VERSIONS = {"0.2", "0.3"}
+PYYAML_MISSING_HINT = "PyYAML required. Run: pip install pyyaml"
 
 DEFAULT_ENFORCEMENT = {
     "productRoots": ["apps/"],

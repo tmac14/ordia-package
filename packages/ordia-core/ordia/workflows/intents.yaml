@@ -58,7 +58,7 @@ intents:
     mode: null
     template: control.md
     requires_task: true
-    related_commands: ["control:validate"]
+    related_commands: ["ordia validate --project"]
     end_state: ACCEPT
     body_hint: Verdict ACCEPT | ACCEPT_WITH_NOTES | NEEDS_MORE_PROOF | REJECT.
 
@@ -70,7 +70,7 @@ intents:
     mode: null
     template: control.md
     requires_task: false
-    related_commands: ["control:validate"]
+    related_commands: ["ordia validate --project"]
     end_state: TASK_DRAFT
     body_hint: Draft from TASK_PACKET_TEMPLATE; do not mark VALIDATED without evidence.
 
@@ -142,7 +142,7 @@ intents:
     mode: null
     template: planning.md
     requires_task: true
-    related_commands: ["control:validate"]
+    related_commands: ["ordia validate --project"]
     end_state: LOCKS_CONFIRMED
     body_hint: Record locks in TASK_REGISTRY before READY_FOR_IMPLEMENTATION.
 
@@ -154,7 +154,7 @@ intents:
     mode: Agent
     template: work.md
     requires_task: true
-    related_commands: ["ordia:model:recommend", "control:validate"]
+    related_commands: ["ordia:model:recommend", "ordia validate --project"]
     end_state: IMPLEMENTED_AND_VALIDATED
     body_hint: Execute approved plan within allowed scope only.
 
@@ -166,7 +166,7 @@ intents:
     mode: Agent
     template: work.md
     requires_task: true
-    related_commands: ["ordia:model:recommend", "control:validate"]
+    related_commands: ["ordia:model:recommend", "ordia validate --project"]
     end_state: IMPLEMENTED_AND_VALIDATED
     body_hint: Deliver feature per acceptance criteria in task packet.
 
@@ -178,7 +178,7 @@ intents:
     mode: Agent
     template: work.md
     requires_task: true
-    related_commands: ["ordia:model:recommend", "control:validate"]
+    related_commands: ["ordia:model:recommend", "ordia validate --project"]
     end_state: IMPLEMENTED_AND_VALIDATED
     body_hint: Reproduce, fix root cause, add regression test when applicable.
 
@@ -190,7 +190,7 @@ intents:
     mode: Agent
     template: work.md
     requires_task: true
-    related_commands: ["control:validate"]
+    related_commands: ["ordia validate --project"]
     end_state: IMPLEMENTED_AND_VALIDATED
     body_hint: No behavior change unless task packet explicitly allows it.
 
@@ -214,7 +214,7 @@ intents:
     mode: Agent
     template: quality.md
     requires_task: true
-    related_commands: ["control:validate", "ordia:validate"]
+    related_commands: ["ordia validate", "ordia validate --project"]
     end_state: VALIDATION_PENDING
     body_hint: Execute mandatory regressions from task packet and COMMANDS.md.
 
@@ -250,6 +250,6 @@ intents:
     mode: null
     template: quality.md
     requires_task: true
-    related_commands: ["control:validate", "ordia:validate:strict-model"]
+    related_commands: ["ordia validate --project", "ordia validate --project --strict-model-report"]
     end_state: VALIDATED
-    body_hint: QA ACCEPT -> EVIDENCE_INDEX -> packet -> registry -> state -> control:validate.
+    body_hint: QA ACCEPT -> EVIDENCE_INDEX -> packet -> registry -> state -> ordia validate --project.

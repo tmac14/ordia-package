@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import subprocess
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -16,9 +17,11 @@ from ordia.workflows import (
     list_intents,
     load_intent,
 )
+from ordia.workflows.loader import load_intents_document, overlay_path, workflows_root
 
 REPO_ROOT = Path(__file__).resolve().parents[4]
 CLI_CMD = [sys.executable, "-m", "ordia.cli"]
+INTENTS_PATH = workflows_root() / "intents.yaml"
 
 
 class WorkflowRegistryTests(unittest.TestCase):
@@ -104,3 +107,80 @@ class WorkflowCliTests(unittest.TestCase):
         )
         self.assertEqual(proc.returncode, 0, proc.stderr)
         self.assertIn("intent: recover", proc.stdout)
+
+
+class WorkflowLoaderTests(unittest.TestCase):
+    def test_load_intents_document_core_only(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            target = Path(tmp)
+            init = subprocess.run(
+                [*CLI_CMD, "init", "--directory", str(target), "--profile", "loader-test"],
+                cwd=REPO_ROOT,
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            self.assertEqual(init.returncode, 0, init.stderr or init.stdout)
+            doc = load_intents_document(target)
+            self.assertIn("intents", doc)
+            self.assertGreaterEqual(len(doc["intents"]), 18)
+
+    def test_overlay_path_with_profile_file(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            target = Path(tmp)
+            init = subprocess.run(
+                [*CLI_CMD, "init", "--directory", str(target), "--profile", "overlay-demo"],
+                cwd=REPO_ROOT,
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            self.assertEqual(init.returncode, 0, init.stderr or init.stdout)
+            overlay_dir = target / "docs" / "control" / "workflows"
+            overlay_dir.mkdir(parents=True, exist_ok=True)
+            overlay_file = overlay_dir / "intents.overlay-demo.yaml"
+            overlay_file.write_text(
+                "schema_version: 1\nintents:\n  - id: recover\n    body_hint: overlay hint\n",
+                encoding="utf-8",
+            )
+            from ordia.config import load_ordia_config
+
+            config = load_ordia_config(target)
+            assert config is not None
+            path = overlay_path(target, config)
+            self.assertEqual(path.resolve(), overlay_file.resolve())
+            merged = load_intents_document(target)
+            recover = next(i for i in merged["intents"] if i["id"] == "recover")
+            self.assertEqual(recover.get("body_hint"), "overlay hint")
+            self.assertEqual(merged.get("overlay_schema_version"), 1)
+
+    def test_overlay_path_custom_rel_in_manifest(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            target = Path(tmp)
+            init = subprocess.run(
+                [*CLI_CMD, "init", "--directory", str(target), "--profile", "custom-overlay"],
+                cwd=REPO_ROOT,
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            self.assertEqual(init.returncode, 0, init.stderr or init.stdout)
+            custom = target / "docs" / "control" / "my-intents.yaml"
+            custom.write_text("intents:\n  - id: recover\n    title: Custom recover\n", encoding="utf-8")
+            manifest = target / "ordia.yaml"
+            text = manifest.read_text(encoding="utf-8")
+            manifest.write_text(
+                text + "\nworkflows:\n  overlay: docs/control/my-intents.yaml\n",
+                encoding="utf-8",
+            )
+            from ordia.config import load_ordia_config
+
+            config = load_ordia_config(target)
+            assert config is not None
+            path = overlay_path(target, config)
+            self.assertEqual(path.resolve(), custom.resolve())
+
+    def test_intents_no_legacy_control_commands(self) -> None:
+        text = INTENTS_PATH.read_text(encoding="utf-8")
+        self.assertNotIn("control:validate", text)
+        self.assertNotIn("control:test", text)

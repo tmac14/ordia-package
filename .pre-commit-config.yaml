@@ -1,0 +1,23 @@
+repos:
+  - repo: local
+    hooks:
+      - id: ruff-check
+        name: ruff check
+        entry: ruff check packages/ordia-core/ordia packages/ordia-core/tests tools
+        language: system
+        pass_filenames: false
+      - id: ruff-format
+        name: ruff format check
+        entry: ruff format --check packages/ordia-core/ordia packages/ordia-core/tests tools
+        language: system
+        pass_filenames: false
+      - id: mypy
+        name: mypy
+        entry: mypy packages/ordia-core/ordia
+        language: system
+        pass_filenames: false
+      - id: pytest-fast
+        name: pytest fast
+        entry: pytest packages/ordia-core/tests -m "not wheel" -q
+        language: system
+        pass_filenames: false

@@ -2,7 +2,7 @@
 
 **Package:** `ordia-core` **0.10.0**  
 **Program:** Ordia v0.8 — documentation + workflow intents closeout  
-**Authority:** [SPEC v0.8](../../../docs/ordia/SPEC_v0.8.md) · [IMPROVEMENT_PLAN v0.8](../../../docs/ordia/IMPROVEMENT_PLAN_v0.8.md)
+**Authority:** [SPEC v0.8](../../../docs/ordia/SPEC_v0.8.md) · [IMPROVEMENT_PLAN v0.8](../../../docs/ordia/archive/IMPROVEMENT_PLAN_v0.8.md)
 
 ---
 
@@ -138,11 +138,11 @@ checks plus an optional subprocess from `closure.validator`. See [VALIDATOR.md](
 | Document | Location | Role |
 |---|---|---|
 | SPEC v0.2 | `docs/ordia/SPEC_v0.2.md` | Manifest schema authority |
-| SPEC v0.5 | `docs/ordia/SPEC_v0.5.md` | Greenfield + validator baseline |
+| SPEC v0.5 | `docs/ordia/archive/SPEC_v0.5.md` | Greenfield + validator baseline |
 | SPEC v0.8 | `docs/ordia/SPEC_v0.8.md` | Active program spec |
 | DAILY_USAGE | `docs/ordia/DAILY_USAGE.md` | Operator guide |
-| IMPROVEMENT_PLAN v0.8 | `docs/ordia/IMPROVEMENT_PLAN_v0.8.md` | Closed program slice |
-| PUBLISH_CHECKLIST | `docs/ordia/PUBLISH_CHECKLIST.md` | PyPI / marketplace gates |
+| IMPROVEMENT_PLAN v0.8 | `docs/ordia/archive/IMPROVEMENT_PLAN_v0.8.md` | Closed program slice |
+| PUBLISH_CHECKLIST | `docs/ordia/archive/PUBLISH_CHECKLIST.md` | PyPI / marketplace gates |
 | Project profile | `AGENTS.md` (repo root) | Narofitness agent topology |
 | Command catalog | `COMMANDS.md` (repo root) | Profile command overlay |
 

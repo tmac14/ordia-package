@@ -1,6 +1,6 @@
 # Ordia Testing Guide
 
-**Target:** pytest with coverage ≥ 75% on `ordia/` (≥ 80% stretch goal)  
+**Target:** pytest with coverage ≥ 80% on `ordia/`  
 **Entry command:** `pytest packages/ordia-core/tests`  
 **Related:** [CLI.md](./CLI.md) · [VALIDATOR.md](./VALIDATOR.md) · [GREENFIELD.md](./GREENFIELD.md)
 
@@ -13,6 +13,16 @@ Document **pytest suites**, wheel packaging tests, Cursor bundle drift sync, and
 ## Audience
 
 Contributors implementing Ordia features, CI maintainers, and agents running regression gates before marking work VALIDATED.
+
+---
+
+## Pre-commit (local)
+
+```powershell
+pip install pre-commit
+pre-commit install
+pre-commit run --all-files
+```
 
 ---
 

@@ -1,6 +1,6 @@
 [project]
 name = "ordia-core"
-version = "0.10.0"
+version = "0.11.0"
 description = "Ordia durable agent orchestration and implementation control"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -34,12 +34,13 @@ dev = [
   "mypy>=1.13,<2",
   "build>=1.2,<2",
   "twine>=5,<7",
+  "pre-commit>=4,<5",
 ]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["."]
-addopts = "-ra --strict-markers --cov=ordia --cov-report=term-missing --cov-fail-under=70"
+addopts = "-ra --strict-markers --cov=ordia --cov-report=term-missing --cov-fail-under=80"
 markers = [
   "integration: subprocess or temp filesystem tests",
   "wheel: pip install smoke (slow)",

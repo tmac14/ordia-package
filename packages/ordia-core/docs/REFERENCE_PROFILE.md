@@ -73,7 +73,7 @@ closure:
   validator: ordia validate --project
 ```
 
-Program baseline: [IMPROVEMENT_PLAN v0.6](../../../docs/ordia/IMPROVEMENT_PLAN_v0.6.md).
+Program baseline: [IMPROVEMENT_PLAN v0.6](../../../docs/ordia/archive/IMPROVEMENT_PLAN_v0.6.md).
 
 ---
 

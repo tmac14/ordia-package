@@ -20,7 +20,11 @@ CLI_CMD = [sys.executable, "-m", "ordia.cli"]
 
 
 class OrdiaValidatorTests(unittest.TestCase):
-    def test_profile_match_warns_by_default(self) -> None:
+    def test_validate_project_missing_manifest(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            target = Path(tmp)
+            result = validate_project(target)
+            self.assertTrue(any("ordia.yaml is missing" in err for err in result.errors))
         config = load_ordia_config(REPO_ROOT)
         if config is None:
             self.skipTest("no ordia.yaml in repo root")

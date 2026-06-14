@@ -16,8 +16,9 @@ from datetime import date
 from pathlib import Path
 from typing import Any
 
+from ordia import __version__
 from ordia.bootstrap import repo_root_from_core
-from ordia.config import load_ordia_config, templates_root, validate_ordia_manifest
+from ordia.config import PYYAML_MISSING_HINT, load_ordia_config, templates_root, validate_ordia_manifest
 from ordia.protocols import protocols_root
 
 _log_level = getattr(logging, os.environ.get("ORDIA_LOG", "WARNING").upper(), logging.WARNING)
@@ -182,6 +183,12 @@ def _install_package_docs(target: Path) -> list[Path]:
 
 
 def cmd_init(args: argparse.Namespace) -> int:
+    try:
+        import yaml  # noqa: F401
+    except ImportError:
+        print(f"ERROR: {PYYAML_MISSING_HINT}", file=sys.stderr)
+        return 2
+
     target = Path(args.directory).resolve()
     target.mkdir(parents=True, exist_ok=True)
     manifest = target / "ordia.yaml"
@@ -264,26 +271,34 @@ def cmd_validate(args: argparse.Namespace) -> int:
     root = Path(args.directory).resolve()
     config = load_ordia_config(root)
     if config is None:
-        print("ERROR: ordia.yaml missing or invalid", file=sys.stderr)
+        message = "ordia.yaml missing or invalid"
+        if getattr(args, "json", False):
+            from ordia.output import OrdiaReport, emit_json
+
+            emit_json(
+                OrdiaReport(
+                    command="validate",
+                    ordia_version=__version__,
+                    ok=False,
+                    issues=[message],
+                )
+            )
+        else:
+            print(f"ERROR: {message}", file=sys.stderr)
         return 1
 
     errors: list[str] = []
     warnings: list[str] = []
     validate_ordia_manifest(config, errors, warnings)
-    for warning in warnings:
-        print(f"WARNING: {warning}")
-    if errors:
-        for error in errors:
-            print(f"ERROR: {error}", file=sys.stderr)
-        print("RESULT: FAIL")
-        return 1
-
-    print("Ordia manifest validation")
-    print(f"- profile: {config.profile}")
-    print(f"- version: {config.version}")
-    print(f"- control root: {config.control_root.relative_to(root)}")
-    print(f"- warnings: {len(warnings)}")
-    print(f"- errors: 0")
+    project_errors: list[str] = []
+    project_warnings: list[str] = []
+    metadata: dict[str, object] = {
+        "profile": config.profile,
+        "control_root": str(config.control_root.relative_to(root)),
+        "strict_profile": bool(getattr(args, "strict_profile", False)),
+        "strict_closure": bool(getattr(args, "strict_closure", False)),
+        "strict_model_report": bool(getattr(args, "strict_model_report", False)),
+    }
 
     if args.project:
         from ordia.validator.project import ProjectValidationOptions, validate_project
@@ -301,15 +316,46 @@ def cmd_validate(args: argparse.Namespace) -> int:
             opts.validate_inventory = True
             opts.inventory_path = str(config.inventory_doc_path)
         result = validate_project(root, config, opts)
-        for warning in result.warnings:
-            print(f"WARNING: {warning}")
-        if result.errors:
-            for error in result.errors:
-                print(f"ERROR: {error}", file=sys.stderr)
-            print("RESULT: FAIL")
-            return 1
+        project_errors = list(result.errors)
+        project_warnings = list(result.warnings)
+
+    all_errors = errors + project_errors
+    all_warnings = warnings + project_warnings
+    metadata["error_count"] = len(all_errors)
+    metadata["warning_count"] = len(all_warnings)
+
+    if getattr(args, "json", False):
+        from ordia.output import OrdiaReport, emit_json
+
+        emit_json(
+            OrdiaReport(
+                command="validate",
+                ordia_version=__import__("ordia").__version__,
+                ok=not all_errors,
+                issues=all_errors,
+                warnings=all_warnings,
+                metadata=metadata,
+            )
+        )
+        return 1 if all_errors else 0
+
+    for warning in all_warnings:
+        print(f"WARNING: {warning}")
+    if all_errors:
+        for error in all_errors:
+            print(f"ERROR: {error}", file=sys.stderr)
+        print("RESULT: FAIL")
+        return 1
+
+    print("Ordia manifest validation")
+    print(f"- profile: {config.profile}")
+    print(f"- version: {config.version}")
+    print(f"- control root: {config.control_root.relative_to(root)}")
+    print(f"- warnings: {len(all_warnings)}")
+    print(f"- errors: 0")
+    if args.project:
         print("Project validation")
-        print(f"- warnings: {len(result.warnings)}")
+        print(f"- warnings: {len(project_warnings)}")
         print(f"- errors: 0")
 
     print("RESULT: PASS")
@@ -642,7 +688,7 @@ def cmd_doctor(args: argparse.Namespace) -> int:
 
     config = load_ordia_config(root)
     if config is None and manifest.is_file():
-        issues.append("ordia.yaml could not be loaded (install PyYAML: pip install pyyaml)")
+        issues.append(f"ordia.yaml could not be loaded ({PYYAML_MISSING_HINT})")
     elif config is not None:
         errors: list[str] = []
         warnings: list[str] = []
@@ -690,7 +736,19 @@ def cmd_doctor(args: argparse.Namespace) -> int:
     try:
         import yaml  # noqa: F401
     except ImportError:
-        issues.append("PyYAML not installed — run: pip install pyyaml")
+        issues.append(f"dependency: pyyaml missing ({PYYAML_MISSING_HINT})")
+
+    metadata = {
+        "hooks_installed": hooks_json.is_file(),
+        "rules_installed": rules_dir.is_dir() and any(rules_dir.glob("ordia-*.mdc")),
+        "manifest_loader_installed": manifest_loader.is_file(),
+    }
+
+    if getattr(args, "json", False):
+        from ordia.output import emit_json, report_from_doctor
+
+        emit_json(report_from_doctor(issues=issues, hints=hints, metadata=metadata))
+        return 1 if issues else 0
 
     print("Ordia doctor")
     for hint in hints:
@@ -760,6 +818,7 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Warn when VALIDATED tasks lack Model usage evidence",
     )
+    validate_parser.add_argument("--json", action="store_true", help="Emit JSON report")
     validate_parser.set_defaults(func=cmd_validate)
 
     model_parser = sub.add_parser("model", help="Model tier routing utilities", parents=[root_parent])
@@ -836,6 +895,7 @@ def build_parser() -> argparse.ArgumentParser:
     prompt_header.set_defaults(func=cmd_prompt_header)
 
     doctor_parser = sub.add_parser("doctor", help="Check Ordia setup and dependencies", parents=[root_parent])
+    doctor_parser.add_argument("--json", action="store_true", help="Emit JSON report")
     doctor_parser.set_defaults(func=cmd_doctor)
 
     help_parser = sub.add_parser("help", help="Command catalog overview, list, or detail", parents=[root_parent])

@@ -4,6 +4,10 @@ rules:
     lifecycle: CORE
     language: English
     category: product
+  - pattern: "docs/ordia/archive/**"
+    lifecycle: ARCHIVE
+    language: English
+    category: historical
   - pattern: "packages/ordia-core/docs/**"
     lifecycle: CORE
     language: English

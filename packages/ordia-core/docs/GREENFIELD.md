@@ -306,4 +306,4 @@ Ensure CI can execute the command non-interactively.
 - Do not copy Narofitness exceptions → [REFERENCE_PROFILE.md](./REFERENCE_PROFILE.md)
 - Changelog / upgrade notes → [CHANGELOG.md](./CHANGELOG.md)
 
-External: [SPEC v0.5](../../../docs/ordia/SPEC_v0.5.md).
+External: [SPEC v0.5](../../../docs/ordia/archive/SPEC_v0.5.md).

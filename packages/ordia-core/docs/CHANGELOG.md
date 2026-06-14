@@ -4,7 +4,7 @@ All notable changes to **`ordia-core`** are documented here.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/).  
 Package versioning follows SemVer. Program milestones reference
-[IMPROVEMENT_PLAN v0.6](../../../docs/ordia/IMPROVEMENT_PLAN_v0.6.md).
+[IMPROVEMENT_PLAN v0.6](../../../docs/ordia/archive/IMPROVEMENT_PLAN_v0.6.md).
 
 **Related:** [README.md](./README.md) · [GREENFIELD.md](./GREENFIELD.md)
 
@@ -19,6 +19,29 @@ greenfield scaffolds — with decision cross-references where applicable.
 
 Release engineers, profile maintainers pinning `ordia-core` versions, and
 auditors tracing when behavior changed.
+
+---
+
+## [0.11.0] — 2026-06-14
+
+**Program:** Ordia v0.11.0 — coverage 80%, JSON CLI, plugins, CI hardening
+
+### Added
+
+- Coverage gate 80% with expanded unit/integration tests
+- `.pre-commit-config.yaml` (ruff, mypy, pytest fast)
+- `ordia doctor --json` and `ordia validate --project --json` via `ordia/output.py`
+- `docs/ordia/archive/` for historical spikes and plans
+- `tools/verify_version_parity.py` (ordia-core ↔ ordia-cursor)
+- Profile validator plugin API (`ordia.plugins`, entry point group `ordia.validators`)
+- `examples/greenfield/` + CI `example-smoke` job
+- PyPI publish via OIDC trusted publishing (no token in workflow)
+
+### Changed
+
+- `workflows/intents.yaml` uses pip-only `ordia validate --project` (no `control:*`)
+- Improved PyYAML missing dependency messages on `init` and `doctor`
+- Publish workflow uses artifact upload + OIDC
 
 ---
 
@@ -193,7 +216,7 @@ auditors tracing when behavior changed.
 
 ## [0.5.0] — 2026-06-14 (program baseline; package remained 0.4.0 until 0.6.0)
 
-**Spec:** [SPEC v0.5](../../../docs/ordia/SPEC_v0.5.md)  
+**Spec:** [SPEC v0.5](../../../docs/ordia/archive/SPEC_v0.5.md)  
 **Note:** Feature set landed across reference repo + ordia-core modules; package
 version was not bumped until 0.6.0 packaging slice (G-PKG01).
 
@@ -222,7 +245,7 @@ version was not bumped until 0.6.0 packaging slice (G-PKG01).
 
 ## [0.4.0] — 2026-06-13
 
-**Spec:** [SPEC v0.4](../../../docs/ordia/SPEC_v0.5.md) (historical)
+**Spec:** [SPEC v0.4](../../../docs/ordia/archive/SPEC_v0.5.md) (historical)
 
 ### Added
 
@@ -317,7 +340,7 @@ Actions:
 
 ### Program v0.5 → v0.6
 
-See [IMPROVEMENT_PLAN v0.6](../../../docs/ordia/IMPROVEMENT_PLAN_v0.6.md) exit gates.
+See [IMPROVEMENT_PLAN v0.6](../../../docs/ordia/archive/IMPROVEMENT_PLAN_v0.6.md) exit gates.
 
 ---
 

@@ -13,6 +13,14 @@ AUDIT = REPO_ROOT / "tools" / "audits" / "docs_inventory.py"
 
 
 @pytest.mark.product
+def test_docs_inventory_includes_archive_rule() -> None:
+    inventory = REPO_ROOT / "docs" / "docs_inventory.yaml"
+    text = inventory.read_text(encoding="utf-8")
+    assert "docs/ordia/archive/**" in text
+    assert "ARCHIVE" in text
+
+
+@pytest.mark.product
 def test_docs_inventory_check() -> None:
     if not AUDIT.is_file():
         pytest.skip(f"audit script not found: {AUDIT}")

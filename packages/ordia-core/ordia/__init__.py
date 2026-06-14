@@ -8,9 +8,9 @@ try:
     try:
         __version__ = version("ordia-core")
     except PackageNotFoundError:
-        __version__ = "0.10.0"
+        __version__ = "0.11.0"
 except ImportError:  # pragma: no cover
-    __version__ = "0.10.0"
+    __version__ = "0.11.0"
 
 __all__ = [
     "OrdiaConfig",

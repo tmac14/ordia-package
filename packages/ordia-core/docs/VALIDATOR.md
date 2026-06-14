@@ -299,6 +299,34 @@ Narofitness uses `docs/coordination/DOCUMENTATION_INVENTORY.md`.
 
 ---
 
+## Profile validator plugins (v0.11+)
+
+Consumer projects can register additional validation via setuptools entry points:
+
+```toml
+[project.entry-points."ordia.validators"]
+myapp = "myapp_ordia.validators:validate_profile"
+```
+
+Plugin signature:
+
+```python
+def validate_profile(
+    root: Path,
+    config: OrdiaConfig,
+    result: Validation,
+    *,
+    options: ProjectValidationOptions,
+) -> None:
+    ...
+```
+
+- Entry point **name** must match `ordia.yaml` `profile` (or use `{profile}.*` prefix).
+- Invoked from `validate_project()` after generic checks.
+- Plugin exceptions become warnings; use `--strict-profile` to promote to errors.
+
+---
+
 ## Testing
 
 See [TESTING.md](./TESTING.md):

@@ -198,7 +198,7 @@ source — package templates are canonical (`ORDIA-D021`).
 ### Workflow intents (ORDIA-D023)
 
 Portable protocol stubs document intent entrypoints; emit full blocks via `ordia prompt emit`.
-See [WORKFLOW_INTENTS_SPIKE.md](../../../docs/ordia/WORKFLOW_INTENTS_SPIKE.md).
+See [WORKFLOW_INTENTS_SPIKE.md](../../../docs/ordia/archive/WORKFLOW_INTENTS_SPIKE.md).
 
 ---
 

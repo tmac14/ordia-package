@@ -8,16 +8,16 @@ Monorepo for **Ordia** — durable agent orchestration and implementation contro
 | [`packages/ordia-cursor/`](packages/ordia-cursor/) | Dev-only npm stub; wheel embed is canonical for hooks/rules |
 | [`docs/ordia/`](docs/ordia/) | Live product documentation (portable subset synced to wheel) |
 | [`tools/`](tools/) | Bundle sync, release verification, documentation audits |
-| [`packages/ordia-core/tests/`](packages/ordia-core/tests/) | pytest suites |
+| [`examples/greenfield/`](examples/greenfield/) | Minimal greenfield walkthrough + CI smoke |
 
-**Current version:** `ordia-core` **0.10.0**
+**Current version:** `ordia-core` **0.11.0**
 
 ---
 
 ## Install (consumers)
 
 ```powershell
-pip install ordia-core==0.10.0
+pip install ordia-core==0.11.0
 ordia init --with-cursor
 ```
 
@@ -65,3 +65,4 @@ python tools/verify_release_tag.py --tag ordia-core-v0.10.0
 | `tools/audits/product_docs_sync.py` | `docs/ordia/` ↔ `product_docs/` drift |
 | `tools/audits/docs_inventory.py` | Documentation inventory rules |
 | `tools/verify_release_tag.py` | Tag ↔ `pyproject.toml` version check |
+| `tools/verify_version_parity.py` | ordia-core ↔ ordia-cursor version check |
