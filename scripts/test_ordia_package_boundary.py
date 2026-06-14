@@ -64,6 +64,8 @@ class OrdiaPackageBoundaryTests(unittest.TestCase):
         for path in template.rglob("*"):
             if not path.is_file():
                 continue
+            if "__pycache__" in path.parts:
+                continue
             relative = path.relative_to(template)
             wheel_copy = CURSOR_BUNDLE / relative
             self.assertTrue(wheel_copy.is_file(), f"missing wheel bundle copy: {relative}")

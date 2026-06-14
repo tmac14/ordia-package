@@ -13,6 +13,8 @@ AUDIT = ROOT / "scripts" / "audit_command_catalog_coverage.py"
 
 class CommandCatalogCoverageTests(unittest.TestCase):
     def test_reference_repo_full_coverage(self) -> None:
+        if not (ROOT / "scripts" / "commands.catalog.json").is_file():
+            self.skipTest("reference npm command catalog not present")
         proc = subprocess.run(
             [sys.executable, str(AUDIT), "--check"],
             cwd=ROOT,
