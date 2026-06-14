@@ -2,7 +2,7 @@
 
 **Audience:** control-plane operators and implementers in Ordia-enabled projects  
 **CLI reference:** [packages/ordia-core/docs/CLI.md](https://github.com/tmac14/ordia-package/blob/main/packages/ordia-core/docs/CLI.md)  
-**Version:** v0.15.0 (parallel orchestration, docs audit, L1–L3 catalog, UI/UX intents)
+**Version:** v0.15.1 (patch: cursor bundle parallel hook enforcement restored in wheel)
 
 ---
 

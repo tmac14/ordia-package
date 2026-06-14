@@ -1,6 +1,6 @@
 # Task lifecycle walkthrough (reference)
 
-**Version:** ordia-core 0.15.0  
+**Version:** ordia-core 0.15.1  
 **Audience:** Operators running the first task on a greenfield project.
 
 This document shows one task from creation through closure. File paths assume greenfield layout (`docs/control/`).

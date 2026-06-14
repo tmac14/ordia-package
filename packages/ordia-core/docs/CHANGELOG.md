@@ -22,6 +22,21 @@ auditors tracing when behavior changed.
 
 ---
 
+## [0.15.1] — 2026-06-14
+
+**Program:** Ordia v0.15.1 — patch: cursor bundle parallel hooks in wheel
+
+### Fixed
+
+- Cursor bundle shipped in 0.15.0 wheel was missing parallel hook enforcement after template sync; restored `parallel_edit_blocked`, `strictParallelPaths` in lite manifest loader, and pip-safe `workflow_intents_lite` intent resolution
+- `recovery_context()` now summarizes in-flight task owners and active locks on session start
+
+### Added
+
+- Tests: parallel foreign-lock hook block, `workflow_intents_lite` wheel path, docs audit CLI flags, `orchestrate_parallel` emit checklist, parallel path helpers
+
+---
+
 ## [0.15.0] — 2026-06-14
 
 **Program:** Ordia v0.15.0 — professional parallel orchestration and adoption

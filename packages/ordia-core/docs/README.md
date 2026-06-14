@@ -1,6 +1,6 @@
 # Ordia Core Package Documentation
 
-**Package:** `ordia-core` **0.15.0**  
+**Package:** `ordia-core` **0.15.1**  
 **Program:** Ordia v0.8 — documentation + workflow intents closeout  
 **Authority:** [SPEC v0.8](../../../docs/ordia/SPEC_v0.8.md) · [IMPROVEMENT_PLAN v0.8](../../../docs/ordia/archive/IMPROVEMENT_PLAN_v0.8.md)
 

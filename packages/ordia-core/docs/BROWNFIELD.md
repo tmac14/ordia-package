@@ -1,6 +1,6 @@
 # Brownfield adoption (existing repositories)
 
-**Package:** ordia-core 0.15.0  
+**Package:** ordia-core 0.15.1  
 **Related:** [GREENFIELD.md](./GREENFIELD.md) · [CLI.md](./CLI.md) · [REFERENCE_PROFILE.md](./REFERENCE_PROFILE.md)
 
 ---
@@ -51,7 +51,7 @@ Use `ordia/control/paths.py` resolution: greenfield `protocols/` first, legacy `
 ### 3. Incremental scaffold
 
 ```powershell
-pip install ordia-core==0.15.0
+pip install ordia-core==0.15.1
 ordia init --skip-existing --with-cursor --directory .
 ```
 
