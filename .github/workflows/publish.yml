@@ -1,0 +1,24 @@
+name: publish
+
+on:
+  push:
+    tags:
+      - "ordia-core-v*"
+
+jobs:
+  pypi:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: python -m pip install -U pip build twine
+      - run: python scripts/sync_ordia_cursor_bundle.py --sync --product-only
+      - run: python -m build --wheel --outdir dist
+        working-directory: packages/ordia-core
+      - uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: packages/ordia-core/dist/

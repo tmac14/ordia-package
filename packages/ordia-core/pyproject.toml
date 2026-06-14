@@ -1,0 +1,41 @@
+[project]
+name = "ordia-core"
+version = "0.8.0"
+description = "Ordia durable agent orchestration and implementation control"
+readme = "README.md"
+requires-python = ">=3.11"
+license = "MIT"
+license-files = ["LICENSE"]
+dependencies = ["pyyaml"]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Developers",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Software Development :: Build Tools",
+  "Topic :: Software Development :: Quality Assurance",
+]
+
+[project.urls]
+Homepage = "https://github.com/tmac14/ordia-package"
+Documentation = "https://github.com/tmac14/ordia-package/tree/main/packages/ordia-core/docs"
+Repository = "https://github.com/tmac14/ordia-package"
+
+[project.scripts]
+ordia = "ordia.cli:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["ordia*"]
+
+[tool.setuptools.package-data]
+ordia = ["templates/**/*", "protocols/*.md", "commands/*.json", "workflows/**/*", "product_docs/*.md", "cursor_bundle/**/*"]
+
+[tool.setuptools.data-files]
+"share/doc/ordia-core" = ["docs/*.md"]
