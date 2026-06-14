@@ -1,93 +1,185 @@
-name: test
-
-on:
-  push:
-    branches: [main]
-  pull_request:
-
-jobs:
-  lint:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-      - run: python -m pip install -U pip
-      - run: pip install -e "packages/ordia-core[dev]"
-      - run: ruff check packages/ordia-core/ordia packages/ordia-core/tests tools
-      - run: ruff format --check packages/ordia-core/ordia packages/ordia-core/tests tools
-
-  typecheck:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-      - run: pip install -e "packages/ordia-core[dev]"
-      - run: mypy packages/ordia-core/ordia
-
-  test:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: ["3.11", "3.12", "3.13"]
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
-      - run: python -m pip install -U pip
-      - run: pip install -e "packages/ordia-core[dev]"
-      - run: python tools/sync_cursor_bundle.py --check --product-only
-      - run: pytest packages/ordia-core/tests -m "not wheel" --cov-fail-under=80
-      - if: matrix.python-version == '3.11'
-        run: pytest packages/ordia-core/tests -m wheel
-
-  audits:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-      - run: pip install -e packages/ordia-core
-      - run: python tools/audits/product_docs_sync.py --check
-      - run: python tools/audits/docs_links.py --strict
-      - run: python tools/audits/docs_inventory.py --check
-      - run: python tools/verify_version_parity.py --check
-      - run: npm pack --dry-run
-        working-directory: packages/ordia-cursor
-
-  example-smoke:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-      - run: pip install -e packages/ordia-core
-      - run: |
-          python - <<'PY'
-          import json, subprocess, sys, tempfile
-          from pathlib import Path
-          repo = Path.cwd()
-          cli = [sys.executable, "-m", "ordia.cli"]
-          with tempfile.TemporaryDirectory() as tmp:
-              target = Path(tmp)
-              subprocess.run([*cli, "init", "--with-cursor", "--directory", str(target), "--profile", "example"], check=True, cwd=repo)
-              doctor = subprocess.run([*cli, "doctor", "--json", "--directory", str(target)], capture_output=True, text=True, check=True, cwd=repo)
-              doc = json.loads(doctor.stdout)
-              assert doc["ok"], doctor.stdout
-              validate = subprocess.run([*cli, "validate", "--project", "--json", "--directory", str(target)], capture_output=True, text=True, check=True, cwd=repo)
-              val = json.loads(validate.stdout)
-              assert val["ok"], validate.stdout
-              prompt = subprocess.run([*cli, "prompt", "emit", "--intent", "recover", "--directory", str(target)], capture_output=True, text=True, check=True, cwd=repo)
-              assert "intent: recover" in prompt.stdout
-          print("example-smoke: PASS")
-          PY
-
+name: test
+
+
+
+on:
+
+  push:
+
+    branches: [main]
+
+  pull_request:
+
+
+
+jobs:
+
+  lint:
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+
+        with:
+
+          python-version: "3.11"
+
+      - run: python -m pip install -U pip
+
+      - run: pip install -e "packages/ordia-core[dev]"
+
+      - run: ruff check packages/ordia-core/ordia packages/ordia-core/tests tools
+
+      - run: ruff format --check packages/ordia-core/ordia packages/ordia-core/tests tools
+
+
+
+  typecheck:
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+
+        with:
+
+          python-version: "3.11"
+
+      - run: pip install -e "packages/ordia-core[dev]"
+
+      - run: mypy packages/ordia-core/ordia
+
+
+
+  test:
+
+    runs-on: ubuntu-latest
+
+    strategy:
+
+      matrix:
+
+        python-version: ["3.11", "3.12", "3.13"]
+
+    steps:
+
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+
+        with:
+
+          python-version: ${{ matrix.python-version }}
+
+      - run: python -m pip install -U pip
+
+      - run: pip install -e "packages/ordia-core[dev]"
+
+      - run: python tools/sync_cursor_bundle.py --check --product-only
+
+      - run: pytest packages/ordia-core/tests -m "not wheel" --cov-fail-under=80
+
+      - if: matrix.python-version == '3.11'
+
+        run: pytest packages/ordia-core/tests -m wheel --no-cov
+
+
+
+  audits:
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+
+        with:
+
+          python-version: "3.11"
+
+      - uses: actions/setup-node@v4
+
+        with:
+
+          node-version: "20"
+
+      - run: pip install -e packages/ordia-core
+
+      - run: python tools/audits/product_docs_sync.py --check
+
+      - run: python tools/audits/docs_links.py --strict
+
+      - run: python tools/audits/docs_inventory.py --check
+
+      - run: python tools/verify_version_parity.py --check
+
+      - run: npm pack --dry-run
+
+        working-directory: packages/ordia-cursor
+
+
+
+  example-smoke:
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+
+        with:
+
+          python-version: "3.11"
+
+      - run: pip install -e packages/ordia-core
+
+      - run: |
+
+          python - <<'PY'
+
+          import json, subprocess, sys, tempfile
+
+          from pathlib import Path
+
+          repo = Path.cwd()
+
+          cli = [sys.executable, "-m", "ordia.cli"]
+
+          with tempfile.TemporaryDirectory() as tmp:
+
+              target = Path(tmp)
+
+              subprocess.run([*cli, "init", "--with-cursor", "--directory", str(target), "--profile", "example"], check=True, cwd=repo)
+
+              doctor = subprocess.run([*cli, "doctor", "--json", "--directory", str(target)], capture_output=True, text=True, check=True, cwd=repo)
+
+              doc = json.loads(doctor.stdout)
+
+              assert doc["ok"], doctor.stdout
+
+              validate = subprocess.run([*cli, "validate", "--project", "--json", "--directory", str(target)], capture_output=True, text=True, check=True, cwd=repo)
+
+              val = json.loads(validate.stdout)
+
+              assert val["ok"], validate.stdout
+
+              prompt = subprocess.run([*cli, "prompt", "emit", "--intent", "recover", "--directory", str(target)], capture_output=True, text=True, check=True, cwd=repo)
+
+              assert "intent: recover" in prompt.stdout
+
+          print("example-smoke: PASS")
+
+          PY
+
+

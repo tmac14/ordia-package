@@ -36,8 +36,8 @@ pytest packages/ordia-core/tests
 # Fast subset (skip slow wheel smoke)
 pytest packages/ordia-core/tests -m "not wheel"
 
-# Wheel smoke only
-pytest packages/ordia-core/tests -m wheel
+# Wheel smoke only (coverage already enforced by the not-wheel suite)
+pytest packages/ordia-core/tests -m wheel --no-cov
 ```
 
 Also run before material control-plane changes:
@@ -128,6 +128,6 @@ Publish workflow `.github/workflows/publish.yml` runs the full test gate before 
 ruff check packages/ordia-core/ordia packages/ordia-core/tests tools
 mypy packages/ordia-core/ordia
 pytest packages/ordia-core/tests -m "not wheel" --cov-fail-under=75
-pytest packages/ordia-core/tests -m wheel
+pytest packages/ordia-core/tests -m wheel --no-cov
 python tools/verify_release_tag.py --tag ordia-core-v0.10.0
 ```
