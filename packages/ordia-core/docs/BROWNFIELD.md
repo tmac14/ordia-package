@@ -1,6 +1,6 @@
 # Brownfield adoption (existing repositories)
 
-**Package:** ordia-core 0.12.0  
+**Package:** ordia-core 0.14.0  
 **Related:** [GREENFIELD.md](./GREENFIELD.md) · [CLI.md](./CLI.md) · [REFERENCE_PROFILE.md](./REFERENCE_PROFILE.md)
 
 ---
@@ -51,7 +51,7 @@ Use `ordia/control/paths.py` resolution: greenfield `protocols/` first, legacy `
 ### 3. Incremental scaffold
 
 ```powershell
-pip install ordia-core==0.12.0
+pip install ordia-core==0.14.0
 ordia init --skip-existing --with-cursor --directory .
 ```
 
@@ -84,7 +84,7 @@ ordia prompt emit --intent recover
 
 ### 6. Profile extensions (optional)
 
-For inventory/guardrails beyond portable rules, add setuptools plugins (`ordia.validators`) or `profileExtensions` per [VALIDATOR.md](./VALIDATOR.md).
+For inventory/guardrails beyond portable rules, add setuptools plugins (`ordia.validators`) or `profileExtensions` per [VALIDATOR.md](./VALIDATOR.md). See [examples/plugin-validator/](../../../examples/plugin-validator/) and CI snippet [examples/consumer-github-action/ordia-consumer.yml](../../../examples/consumer-github-action/ordia-consumer.yml).
 
 ---
 

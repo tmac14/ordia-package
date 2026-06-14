@@ -61,7 +61,10 @@ class ProjectValidationOptions:
     strict_profile: bool = False
     strict_closure: bool = False
     strict_model_report: bool = False
+    strict_limbo: bool = False
     session_profile: str | None = None
+    max_in_flight_per_owner: int | None = None
+    strict_in_flight_limits: bool = False
 
 
 def load_yaml_file(path: Path, root: Path, validation: Validation) -> dict[str, Any]:
@@ -124,7 +127,16 @@ def validate_task_runtime_protocol(task_id: str, task: dict[str, Any], result: V
         result.error(f"{task_id}: invalid runtime/protocol pair {pair}")
 
 
-def validate_tasks(registry: dict[str, Any], decision_ids: set[str], root: Path, result: Validation) -> None:
+def validate_tasks(
+    registry: dict[str, Any],
+    decision_ids: set[str],
+    root: Path,
+    result: Validation,
+    *,
+    max_in_flight_per_owner: int | None = None,
+    strict_in_flight_limits: bool = False,
+    strict_limbo: bool = False,
+) -> None:
     tasks = registry.get("tasks", [])
     if not isinstance(tasks, list):
         result.error("TASK_REGISTRY tasks must be a list")
@@ -192,7 +204,17 @@ def validate_tasks(registry: dict[str, Any], decision_ids: set[str], root: Path,
             result.error(f"{task['id']}: in-flight task has no assigned owner")
         owners[owner].append(str(task["id"]))
     for owner, task_ids in owners.items():
-        if len(task_ids) > 1:
+        count = len(task_ids)
+        if max_in_flight_per_owner is not None and count > max_in_flight_per_owner:
+            message = (
+                f"Owner {owner} has {count} in-flight tasks "
+                f"(maxInFlightPerOwner={max_in_flight_per_owner}): {', '.join(task_ids)}"
+            )
+            if strict_in_flight_limits:
+                result.error(message)
+            else:
+                result.warn(message)
+        elif count > 1:
             result.warn(f"Owner {owner} has multiple in-flight tasks: {', '.join(task_ids)}")
 
     validation_pending = set(queues.get("validation_pending", []) or [])
@@ -201,10 +223,14 @@ def validate_tasks(registry: dict[str, Any], decision_ids: set[str], root: Path,
         if not task:
             continue
         if str(task.get("status")) == "IMPLEMENTED" and str(task_id) not in validation_pending:
-            result.warn(
+            message = (
                 f"{task_id}: IMPLEMENTED in in_flight without validation_pending — "
                 "transition to VALIDATION_PENDING when proof is ready"
             )
+            if strict_limbo:
+                result.error(message)
+            else:
+                result.warn(message)
 
     exact_writes: dict[str, str] = {}
     for task in in_flight:
@@ -440,6 +466,13 @@ def validate_project(
     for error in manifest_errors:
         result.error(error)
 
+    if opts.max_in_flight_per_owner is None:
+        opts.max_in_flight_per_owner = cfg.tasks_max_in_flight_per_owner
+    if not opts.strict_in_flight_limits:
+        opts.strict_in_flight_limits = cfg.tasks_strict_in_flight_limits
+    if not opts.strict_closure:
+        opts.strict_closure = cfg.closure_strict
+
     validate_profile_match(
         cfg,
         opts.session_profile,
@@ -456,7 +489,15 @@ def validate_project(
 
         validate_task_registry_schema(registry, result)
         decision_ids = markdown_table_ids(cfg.decision_log_path)
-        validate_tasks(registry, decision_ids, root, result)
+        validate_tasks(
+            registry,
+            decision_ids,
+            root,
+            result,
+            max_in_flight_per_owner=opts.max_in_flight_per_owner,
+            strict_in_flight_limits=opts.strict_in_flight_limits,
+            strict_limbo=opts.strict_limbo,
+        )
         validate_registry_state_staleness(registry, cfg.state_path, result)
         validate_agents(registry, agent_registry, result)
         validate_authority_paths(registry, agent_registry, root, result)

@@ -252,4 +252,4 @@ intents:
     requires_task: true
     related_commands: ["ordia validate --project", "ordia validate --project --strict-model-report"]
     end_state: VALIDATED
-    body_hint: QA ACCEPT -> EVIDENCE_INDEX -> packet -> registry -> state -> ordia validate --project.
+    body_hint: QA ACCEPT -> EVIDENCE_INDEX -> packet -> registry -> state -> ordia validate --project. Use ordia task transition --status VALIDATION_PENDING when proof is ready.

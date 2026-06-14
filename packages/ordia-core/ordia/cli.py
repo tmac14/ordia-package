@@ -120,6 +120,21 @@ def _install_protocol_templates(
     return written
 
 
+def _product_roots_list(target: Path) -> str:
+    cfg = load_ordia_config(target)
+    if cfg is not None and cfg.product_roots:
+        return ", ".join(cfg.product_roots)
+    return "configured productRoots paths (ordia.yaml → enforcement.productRoots)"
+
+
+def _render_cursor_rule(text: str, target: Path, profile: str) -> str:
+    product_roots = _product_roots_list(target)
+    return (
+        _render(text, profile, "src/")
+        .replace("{{PRODUCT_ROOTS_LIST}}", product_roots)
+    )
+
+
 def _install_cursor_bundle(target: Path, *, profile: str | None = None) -> None:
     bundle = _cursor_bundle()
     if not bundle.is_dir():
@@ -143,8 +158,12 @@ def _install_cursor_bundle(target: Path, *, profile: str | None = None) -> None:
     rules_dest = dest / "rules"
     if rules_src.is_dir():
         rules_dest.mkdir(parents=True, exist_ok=True)
+        profile_name = profile or "default"
         for rule in rules_src.glob("*.mdc"):
-            shutil.copy2(rule, rules_dest / rule.name)
+            content = _render_cursor_rule(
+                rule.read_text(encoding="utf-8"), target, profile_name
+            )
+            (rules_dest / rule.name).write_text(content, encoding="utf-8")
     guardrails_template = bundle / "templates" / "profile-guardrails.mdc.template"
     if guardrails_template.is_file() and profile:
         slug = _profile_slug(profile)
@@ -383,8 +402,9 @@ def cmd_validate(args: argparse.Namespace) -> int:
         "profile": config.profile,
         "control_root": str(config.control_root.relative_to(root)),
         "strict_profile": bool(getattr(args, "strict_profile", False)),
-        "strict_closure": bool(getattr(args, "strict_closure", False)),
+        "strict_closure": bool(getattr(args, "strict_closure", False)) or config.closure_strict,
         "strict_model_report": bool(getattr(args, "strict_model_report", False)),
+        "strict_limbo": bool(getattr(args, "strict_limbo", False)),
     }
 
     if args.project:
@@ -393,8 +413,11 @@ def cmd_validate(args: argparse.Namespace) -> int:
         opts = ProjectValidationOptions(
             require_cursor_workspace=(root / ".cursor" / "hooks.json").is_file(),
             strict_profile=bool(getattr(args, "strict_profile", False)),
-            strict_closure=bool(getattr(args, "strict_closure", False)),
+            strict_closure=bool(getattr(args, "strict_closure", False)) or config.closure_strict,
             strict_model_report=bool(getattr(args, "strict_model_report", False)),
+            strict_limbo=bool(getattr(args, "strict_limbo", False)),
+            max_in_flight_per_owner=config.tasks_max_in_flight_per_owner,
+            strict_in_flight_limits=config.tasks_strict_in_flight_limits,
             session_profile=_session_declared_profile(root),
         )
         if config.profile_cursor_rules:
@@ -1030,6 +1053,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--strict-model-report",
         action="store_true",
         help="Warn when VALIDATED tasks lack Model usage evidence",
+    )
+    validate_parser.add_argument(
+        "--strict-limbo",
+        action="store_true",
+        help="Fail when IMPLEMENTED tasks remain in in_flight without validation_pending",
     )
     validate_parser.add_argument("--json", action="store_true", help="Emit JSON report")
     validate_parser.set_defaults(func=cmd_validate)

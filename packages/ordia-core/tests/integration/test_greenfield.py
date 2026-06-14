@@ -119,6 +119,13 @@ class OrdiaGreenfieldTests(unittest.TestCase):
             manifest = (target / "ordia.yaml").read_text(encoding="utf-8")
             self.assertIn("apps/", manifest)
 
+            rule = (target / ".cursor" / "rules" / "ordia-orchestration-mode.mdc").read_text(
+                encoding="utf-8"
+            )
+            self.assertNotIn("apps/**", rule)
+            self.assertIn("apps/", rule)
+            self.assertIn("enforcement.productRoots", rule)
+
             probe = subprocess.run(
                 [
                     sys.executable,

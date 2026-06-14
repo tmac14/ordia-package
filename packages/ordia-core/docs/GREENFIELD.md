@@ -1,6 +1,6 @@
 # Greenfield Setup Guide
 
-**Package:** ordia-core 0.12.0  
+**Package:** ordia-core 0.14.0  
 **Related:** [CLI.md](./CLI.md) · [BROWNFIELD.md](./BROWNFIELD.md) · [HOOKS_AND_RULES.md](./HOOKS_AND_RULES.md) · [TESTING.md](./TESTING.md)
 
 ---
@@ -36,7 +36,7 @@ and engineers verifying wheel packaging after release.
 ### A. PyPI wheel (target state)
 
 ```powershell
-pip install ordia-core==0.12.0
+pip install ordia-core==0.14.0
 ordia --help
 ```
 
@@ -305,5 +305,7 @@ Ensure CI can execute the command non-interactively.
 - Hook behavior → [HOOKS_AND_RULES.md](./HOOKS_AND_RULES.md)
 - Do not copy Narofitness exceptions → [REFERENCE_PROFILE.md](./REFERENCE_PROFILE.md)
 - Changelog / upgrade notes → [CHANGELOG.md](./CHANGELOG.md)
+- Pip-only CI snippet → [examples/consumer-github-action/ordia-consumer.yml](../../../examples/consumer-github-action/ordia-consumer.yml)
+- Plugin validator example → [examples/plugin-validator/](../../../examples/plugin-validator/)
 
 External: [SPEC v0.5](../../../docs/ordia/archive/SPEC_v0.5.md).

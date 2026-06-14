@@ -1,6 +1,6 @@
 # Task lifecycle walkthrough (reference)
 
-**Version:** ordia-core 0.12.0  
+**Version:** ordia-core 0.14.0  
 **Audience:** Operators running the first task on a greenfield project.
 
 This document shows one task from creation through closure. File paths assume greenfield layout (`docs/control/`).
@@ -63,6 +63,14 @@ Executor prompt: `ordia prompt emit --intent continue_wip --task DEMO-001`
 
 ## 4. Implemented → validation
 
+When implementation proof is ready, transition atomically:
+
+```powershell
+ordia task transition --task DEMO-001 --status VALIDATION_PENDING
+```
+
+Or manually:
+
 ```yaml
 queues:
   in_flight: []
@@ -97,6 +105,7 @@ State §0 — reset Active task ID to `NONE` when no other in-flight work.
 | Step | Command |
 |------|---------|
 | Inspect | `ordia task summary` |
+| Transition | `ordia task transition --task <ID> --status <STATUS>` |
 | Recover | `ordia prompt emit --intent recover` |
 | Validate | `ordia validate --project` |
 | Refresh Cursor | `ordia cursor sync` |

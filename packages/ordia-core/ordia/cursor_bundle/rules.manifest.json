@@ -1,7 +1,7 @@
 {
-  "rules/ordia-coordination-docs.mdc": "b965d25df4d6454d27f86045c800eb54e653e48440a2814a40afcb5b1796d48e",
+  "rules/ordia-coordination-docs.mdc": "5892babeb45830b4eea13446321ff9c7b8c18a58420a9f7da03911c96c21102c",
   "rules/ordia-implementation-mode.mdc": "9a4ae5cd9082b016ad16466eedd52ef0807421a985eaadf570fc90922361d070",
-  "rules/ordia-orchestration-mode.mdc": "e7835e77a9ba643be2f6dc124c2ae8c18c61ce069aefe64ed3dafe99d8d51dfe",
+  "rules/ordia-orchestration-mode.mdc": "50a42e82fb91030cbabb5f054a64cc827b831531624f63b454410f8f94b41a81",
   "rules/ordia-recovery-bootstrap.mdc": "c7df932d5317041b83481fea5d251b70f518671b707a7a20e458abc71a443203",
   "rules/ordia-runtime-protocol-header.mdc": "dd23df0a3c5239a31ab5725343cda0b8ab52edfccf609d0f1deacff0497143d0"
 }

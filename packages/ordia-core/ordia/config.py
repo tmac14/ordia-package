@@ -90,6 +90,9 @@ class OrdiaConfig:
         "orchestration_blocks_product",
         "unified_requires_approval",
         "closure_validator",
+        "closure_strict",
+        "tasks_max_in_flight_per_owner",
+        "tasks_strict_in_flight_limits",
         "commands_catalog",
         "commands_profile_doc",
         "commands_npm_package",
@@ -167,6 +170,14 @@ class OrdiaConfig:
 
         closure = raw.get("closure") if isinstance(raw.get("closure"), dict) else {}
         self.closure_validator = str(closure.get("validator", "npm run ordia:validate"))
+        self.closure_strict = bool(closure.get("strict", False))
+
+        tasks_cfg = raw.get("tasks") if isinstance(raw.get("tasks"), dict) else {}
+        max_in_flight = tasks_cfg.get("maxInFlightPerOwner")
+        self.tasks_max_in_flight_per_owner = (
+            int(max_in_flight) if max_in_flight is not None else None
+        )
+        self.tasks_strict_in_flight_limits = bool(tasks_cfg.get("strictInFlightLimits", False))
 
         commands = raw.get("commands") if isinstance(raw.get("commands"), dict) else {}
         catalog = str(commands.get("catalog", "")).strip()

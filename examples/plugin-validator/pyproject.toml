@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ordia-plugin-validator-example"
+version = "0.1.0"
+description = "Example ordia.validators plugin for ordia-core"
+requires-python = ">=3.11"
+dependencies = ["ordia-core"]
+
+[project.entry-points."ordia.validators"]
+plugin-demo = "myapp_ordia.validators:validate_profile_mention"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["myapp_ordia*"]

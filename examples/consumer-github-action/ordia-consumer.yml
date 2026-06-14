@@ -1,0 +1,31 @@
+# Copy-paste GitHub Actions workflow for pip-only Ordia consumer projects.
+# Save as .github/workflows/ordia-consumer.yml in your application repo.
+
+name: ordia-consumer
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  ordia-control-plane:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Ordia
+        run: pip install ordia-core
+
+      - name: Doctor (strict integrity when hooks installed)
+        run: ordia doctor --strict-integrity
+
+      - name: Validate control plane
+        run: ordia validate --project
+
+      - name: Task summary (JSON)
+        run: ordia task summary --json

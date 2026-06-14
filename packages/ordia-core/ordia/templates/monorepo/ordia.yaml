@@ -47,6 +47,11 @@ enforcement:
 
 closure:
   validator: ordia validate --project
+  # strict: true   # uncomment to promote closure warnings to errors
+
+# tasks:
+#   maxInFlightPerOwner: 1
+#   strictInFlightLimits: false
 
 models:
   registry: docs/control/MODEL_REGISTRY.yaml

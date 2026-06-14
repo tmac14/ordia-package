@@ -1,6 +1,6 @@
 ---
 description: Rules when editing project coordination and control documentation
-globs: docs/control/**,docs/coordination/**,AGENTS.md,ordia.yaml
+globs: docs/control/**,docs/coordination/**,docs/control/protocols/**,docs/control/tasks/**,AGENTS.md,ordia.yaml
 alwaysApply: false
 ---
 

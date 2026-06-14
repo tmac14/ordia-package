@@ -209,6 +209,35 @@ jobs:
 
               assert tr["ok"], transition.stdout
 
+              import importlib.util, io, json as jsonlib, sys as pysys
+              from unittest.mock import patch
+
+              hooks_lib = target / ".cursor" / "hooks"
+              pysys.path.insert(0, str(hooks_lib))
+              from lib import control_context
+
+              session = {"runtime": "ONLY_CURSOR", "protocol": "ORCHESTRATION", "session_mode": "MULTI_CHAT"}
+              blocked, _ = control_context.product_edit_blocked(session, "src/example.ts", target)
+              assert blocked, "ORCHESTRATION should block product path edits"
+
+              header_path = hooks_lib / "validate_runtime_header.py"
+              spec = importlib.util.spec_from_file_location("validate_runtime_header_smoke", header_path)
+              mod = importlib.util.module_from_spec(spec)
+              assert spec and spec.loader
+              spec.loader.exec_module(mod)
+              payload = {"prompt": "Please fix src/example.ts", "workspace_roots": [str(target)]}
+              stdin_backup = pysys.stdin
+              pysys.stdin = io.StringIO(jsonlib.dumps(payload))
+              try:
+                  with patch.object(mod, "load_full_session", return_value=None):
+                      with patch.object(mod, "persist_session_from_state", return_value=False):
+                          with patch.object(mod, "emit_json") as emit_mock:
+                              code = mod._main()
+              finally:
+                  pysys.stdin = stdin_backup
+              assert code == 2, "header hook should deny without session"
+              assert emit_mock.call_args[0][0]["permission"] == "deny"
+
           print("example-smoke: PASS")
 
           PY

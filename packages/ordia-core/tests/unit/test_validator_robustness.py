@@ -48,6 +48,71 @@ class ValidatorRobustnessTests(unittest.TestCase):
             any("IMPLEMENTED in in_flight without validation_pending" in warn for warn in result.warnings)
         )
 
+    def test_implemented_limbo_strict_errors(self) -> None:
+        registry = {
+            "tasks": [
+                {
+                    "id": "TASK-LIMBO",
+                    "status": "IMPLEMENTED",
+                    "owner": "agent-1",
+                    "runtime": "ONLY_CURSOR",
+                    "protocol": "IMPLEMENTATION",
+                    "task_packet": "src/**",
+                }
+            ],
+            "queues": {
+                "in_flight": ["TASK-LIMBO"],
+                "ready_for_parallel": [],
+                "model_tier_pending": [],
+                "waiting_for_user_decision": [],
+                "waiting_for_agent_report": [],
+                "validation_pending": [],
+            },
+        }
+        result = Validation()
+        validate_tasks(registry, set(), Path("/tmp/unused"), result, strict_limbo=True)
+        self.assertTrue(any("IMPLEMENTED in in_flight" in err for err in result.errors))
+
+    def test_max_in_flight_per_owner_strict(self) -> None:
+        registry = {
+            "tasks": [
+                {
+                    "id": "T1",
+                    "status": "IN_FLIGHT",
+                    "owner": "agent-1",
+                    "runtime": "ONLY_CURSOR",
+                    "protocol": "IMPLEMENTATION",
+                    "task_packet": "src/**",
+                },
+                {
+                    "id": "T2",
+                    "status": "IN_FLIGHT",
+                    "owner": "agent-1",
+                    "runtime": "ONLY_CURSOR",
+                    "protocol": "IMPLEMENTATION",
+                    "task_packet": "src/**",
+                },
+            ],
+            "queues": {
+                "in_flight": ["T1", "T2"],
+                "ready_for_parallel": [],
+                "model_tier_pending": [],
+                "waiting_for_user_decision": [],
+                "waiting_for_agent_report": [],
+                "validation_pending": [],
+            },
+        }
+        result = Validation()
+        validate_tasks(
+            registry,
+            set(),
+            Path("/tmp/unused"),
+            result,
+            max_in_flight_per_owner=1,
+            strict_in_flight_limits=True,
+        )
+        self.assertTrue(any("maxInFlightPerOwner" in err for err in result.errors))
+
 
 if __name__ == "__main__":
     unittest.main()

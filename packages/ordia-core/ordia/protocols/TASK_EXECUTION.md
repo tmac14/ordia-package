@@ -22,7 +22,39 @@ DISCOVERY -> PLAN_READY -> APPROVED -> LOCKS_CONFIRMED
   -> VALIDATION_PENDING -> VALIDATED -> CLOSED
 ```
 
+Parallel waiting states (registry queues, not always on the main spine):
+
+- `model_tier_pending` — tier approval outstanding
+- `waiting_for_user_decision` — user gate (`PAUSED`, `WAITING_FOR_USER_DECISION`)
+- `waiting_for_agent_report` — executor report expected
+- `validation_pending` — proof/QA before `VALIDATED`
+
 No implementation before `APPROVED`, `LOCKS_CONFIRMED`, `MODEL_TIER_APPROVED` (when tier > T0), and `READY_FOR_IMPLEMENTATION`.
+
+### Task status ↔ queue mapping
+
+| Queue | Allowed statuses |
+|-------|------------------|
+| `in_flight` | `IN_FLIGHT`, `IMPLEMENTED` |
+| `ready_for_parallel` | `READY_FOR_IMPLEMENTATION` |
+| `model_tier_pending` | `MODEL_TIER_APPROVED` |
+| `waiting_for_user_decision` | `WAITING_FOR_USER_DECISION`, `PAUSED` |
+| `waiting_for_agent_report` | `WAITING_FOR_AGENT_REPORT` |
+| `validation_pending` | `VALIDATION_PENDING` |
+
+Source of truth for validator: `ordia/validator/common.py` (`QUEUE_STATUS`). Keep this table aligned when queues change.
+
+### IMPLEMENTED → VALIDATION_PENDING
+
+When implementation proof is ready:
+
+1. Set task `status: VALIDATION_PENDING`
+2. Move task from `queues.in_flight` to `queues.validation_pending`
+3. Update `{controlRoot}/ORCHESTRATION_STATE.md` §0 and §3
+4. Prefer atomic update: `ordia task transition --task <ID> --status VALIDATION_PENDING`
+5. Run `ordia validate --project` before marking `VALIDATED`
+
+Do not leave `IMPLEMENTED` in `in_flight` indefinitely without moving to `validation_pending`.
 
 ## 3. Closure gate (RUNTIME-D006 parity)
 
@@ -38,7 +70,7 @@ Before `VALIDATED`:
 ## 4. Validation
 
 ```text
-npm run ordia:validate -- --project
+ordia validate --project
 ```
 
-Replace with profile-specific validator when configured in `ordia.yaml` → `closure.validator`.
+Default when configured in `ordia.yaml` → `closure.validator`. Use profile-specific validator when overridden.

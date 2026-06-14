@@ -22,6 +22,31 @@ auditors tracing when behavior changed.
 
 ---
 
+## [0.14.0] — 2026-06-14
+
+**Program:** Ordia v0.14.0 — hardening residual (protocols, manifest rules, strict modes, examples)
+
+### Added
+
+- `CODEX_ORCHESTRATION.md` — UNIFIED table, end-states, prompt quality checklist (Codex/Cursor parity)
+- `TASK_EXECUTION.md` — full queue lifecycle, status↔queue table, IMPLEMENTED → `VALIDATION_PENDING` guidance
+- `DAILY_USAGE.md` — preflight before `orchestrate_batch` (`confirm_locks` → `approve_model` → `READY_FOR_IMPLEMENTATION`)
+- `test_queue_status_parity.py` — `QUEUE_STATUS` parity with protocol docs
+- Manifest-driven Cursor rules: `{{PRODUCT_ROOTS_LIST}}` from `enforcement.productRoots`; coordination globs include `protocols/**`, `tasks/**`
+- `closure.strict` in `ordia.yaml` — promotes closure warnings to errors on `validate --project`
+- `tasks.maxInFlightPerOwner` + `tasks.strictInFlightLimits` — configurable in-flight limits
+- `ordia validate --project --strict-limbo` — optional IMPLEMENTED-limbo as error
+- `examples/plugin-validator/` — `ordia.validators` plugin demo + integration test
+- `examples/consumer-github-action/ordia-consumer.yml` — pip-only CI snippet
+- Example-smoke CI: runtime header deny + product-root edit block under ORCHESTRATION
+
+### Changed
+
+- `close_task` intent body hints `ordia task transition --status VALIDATION_PENDING`
+- `TASK_WALKTHROUGH.md` documents atomic `task transition` step
+
+---
+
 ## [0.13.0] — 2026-06-14
 
 **Program:** Ordia v0.13.0 — enterprise robustness (atomic transitions, schema, integrity)

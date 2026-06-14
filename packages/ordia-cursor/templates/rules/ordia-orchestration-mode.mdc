@@ -25,7 +25,7 @@ Applies when session protocol is `ORCHESTRATION` (any runtime).
 
 ## Forbidden
 
-- Implement or modify product code (`apps/**`, migrations, importer logic, etc.)
+- Implement or modify product code under `{{PRODUCT_ROOTS_LIST}}` (see `ordia.yaml` → `enforcement.productRoots`)
 - Act as Agent 1A–6 in the control-plane chat
 - Mark QA-pending work validated or closed
 - Change priorities or reactivate paused tracks without explicit user instruction

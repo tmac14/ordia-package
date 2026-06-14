@@ -2,7 +2,7 @@
 
 **Audience:** control-plane operators and implementers in Ordia-enabled projects  
 **CLI reference:** [packages/ordia-core/docs/CLI.md](https://github.com/tmac14/ordia-package/blob/main/packages/ordia-core/docs/CLI.md)  
-**Version:** v0.12.0 (task summary, cursor sync, brownfield adoption, pip-first init)
+**Version:** v0.14.0 (protocol parity, manifest strict modes, plugin example)
 
 ---
 
@@ -76,6 +76,23 @@ ordia prompt emit --intent orchestrate_batch --task <TASK-ID>
 ```
 
 Evaluate plans/reports; update limited control docs after material transitions only.
+
+### Preflight before `orchestrate_batch`
+
+Run gates in order before emitting the next executor batch:
+
+```text
+confirm_locks → approve_model → READY_FOR_IMPLEMENTATION → orchestrate_batch
+```
+
+| Step | Intent | Command |
+|------|--------|---------|
+| Confirm parallel-safety locks | `confirm_locks` | `ordia prompt emit --intent confirm_locks --task <TASK-ID>` |
+| Approve model tier | `approve_model` | `ordia model recommend --task <TASK-ID>` then user `APPROVE MODEL T*` |
+| Registry ready | — | Task in `queues.ready_for_parallel` or `in_flight` with status `READY_FOR_IMPLEMENTATION` / `IN_FLIGHT` |
+| Emit batch | `orchestrate_batch` | `ordia prompt emit --intent orchestrate_batch --task <TASK-ID>` |
+
+Always run `ordia validate --project` after material registry/state edits.
 
 ### Implementer — ship an approved slice
 
