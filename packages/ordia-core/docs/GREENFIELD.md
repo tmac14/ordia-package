@@ -1,6 +1,6 @@
 # Greenfield Setup Guide
 
-**Package:** ordia-core 0.9.1  
+**Package:** ordia-core 0.10.0  
 **Related:** [CLI.md](./CLI.md) · [HOOKS_AND_RULES.md](./HOOKS_AND_RULES.md) · [TESTING.md](./TESTING.md)
 
 ---
@@ -36,7 +36,7 @@ and engineers verifying wheel packaging after release.
 ### A. PyPI wheel (target state)
 
 ```powershell
-pip install ordia-core==0.9.1
+pip install ordia-core==0.10.0
 ordia --help
 ```
 
@@ -51,7 +51,7 @@ Verify:
 
 ```powershell
 python -c "import ordia; print(ordia.__version__)"
-# 0.9.1
+# 0.10.0
 ```
 
 ### B. Editable monorepo development
@@ -198,7 +198,7 @@ Narofitness validates packaging via `scripts/test_ordia_wheel.py`:
 cd packages/ordia-core
 python -m pip install build
 python -m build --wheel
-pip install dist/ordia_core-0.8.0*.whl
+pip install dist/ordia_core-0.10.0*.whl
 ordia init --with-cursor -C %TEMP%\wheel-test
 ordia doctor -C %TEMP%\wheel-test
 ```
@@ -246,7 +246,7 @@ vs active tasks are separate checks.
 If init fails with bundle missing, reinstall `ordia-core` or upgrade to the latest wheel:
 
 ```powershell
-pip install --upgrade ordia-core==0.8.0
+pip install --upgrade ordia-core==0.10.0
 ordia init --with-cursor --force --directory .
 ```
 
@@ -282,7 +282,7 @@ Ensure CI can execute the command non-interactively.
 | Hooks deny all edits | No session headers | Declare Runtime + Protocol in prompt |
 | validate --project fails on fresh init | Empty task packet dir only | Expected; fix specific errors |
 | Windows path in hooks.json | Manual edit | Re-run init for escape handling |
-| Stale template content | Old wheel | Upgrade to 0.8.0 |
+| Stale template content | Old wheel | Upgrade to 0.10.0 |
 | docs/ordia/package empty | Forgot --with-docs | Re-run with `--with-docs` or copy manually |
 
 ---
@@ -306,4 +306,4 @@ Ensure CI can execute the command non-interactively.
 - Do not copy Narofitness exceptions → [REFERENCE_PROFILE.md](./REFERENCE_PROFILE.md)
 - Changelog / upgrade notes → [CHANGELOG.md](./CHANGELOG.md)
 
-External: [PUBLISH_CHECKLIST](../../../docs/ordia/PUBLISH_CHECKLIST.md), [SPEC v0.5](../../../docs/ordia/SPEC_v0.5.md).
+External: [SPEC v0.5](../../../docs/ordia/SPEC_v0.5.md).

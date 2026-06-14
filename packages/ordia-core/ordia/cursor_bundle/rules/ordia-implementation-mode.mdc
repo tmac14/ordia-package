@@ -24,7 +24,7 @@ Confirm from prompt + registry + task packet:
 - Gates: `APPROVED`, `LOCKS_CONFIRMED`, `READY_FOR_IMPLEMENTATION` (unless user explicitly overrides)
 - Implementation Quality Score: scope clarity, lock safety, architecture safety, validation plan, no-legacy/no-hardcode — all pass
 
-Run `npm run control:validate` when control docs are in scope; do not implement while it fails.
+Run `ordia validate --project` when control docs are in scope; do not implement while it fails.
 
 Ensure workspace root is the project directory before editing.
 

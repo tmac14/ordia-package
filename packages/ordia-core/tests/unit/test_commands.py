@@ -9,18 +9,13 @@ import tempfile
 import unittest
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
-CLI = ROOT / "scripts" / "ordia_cli.py"
-CATALOG = ROOT / "scripts" / "commands.catalog.json"
-PACKAGE = ROOT / "package.json"
+from ordia.commands.catalog import load_catalog, validate_catalog_sync
+from ordia.commands.schema import validate_catalog_structure
 
-sys.path.insert(0, str(ROOT / "packages" / "ordia-core"))
-
-from ordia.commands.catalog import (  # noqa: E402
-    load_catalog,
-    validate_catalog_sync,
-)
-from ordia.commands.schema import validate_catalog_structure  # noqa: E402
+REPO_ROOT = Path(__file__).resolve().parents[4]
+CLI_CMD = [sys.executable, "-m", "ordia.cli"]
+CATALOG = REPO_ROOT / "scripts" / "commands.catalog.json"
+PACKAGE = REPO_ROOT / "package.json"
 
 
 class OrdiaCommandsTests(unittest.TestCase):
@@ -30,7 +25,7 @@ class OrdiaCommandsTests(unittest.TestCase):
         catalog = load_catalog(CATALOG)
         structure_errors = validate_catalog_structure(catalog)
         self.assertEqual(structure_errors, [], structure_errors)
-        sync_errors, count = validate_catalog_sync(ROOT, CATALOG, PACKAGE)
+        sync_errors, count = validate_catalog_sync(REPO_ROOT, CATALOG, PACKAGE)
         self.assertEqual(sync_errors, [], sync_errors)
         self.assertGreater(count, 50)
 
@@ -53,8 +48,8 @@ class OrdiaCommandsTests(unittest.TestCase):
         if not CATALOG.is_file():
             self.skipTest("reference npm command catalog not present")
         proc = subprocess.run(
-            [sys.executable, str(CLI), "help", "--list", "-C", str(ROOT)],
-            cwd=ROOT,
+            [*CLI_CMD, "help", "--list", "-C", str(REPO_ROOT)],
+            cwd=REPO_ROOT,
             capture_output=True,
             text=True,
             check=False,
@@ -68,8 +63,8 @@ class OrdiaCommandsTests(unittest.TestCase):
         if not CATALOG.is_file():
             self.skipTest("reference npm command catalog not present")
         proc = subprocess.run(
-            [sys.executable, str(CLI), "help", "ordia:validate", "-C", str(ROOT)],
-            cwd=ROOT,
+            [*CLI_CMD, "help", "ordia:validate", "-C", str(REPO_ROOT)],
+            cwd=REPO_ROOT,
             capture_output=True,
             text=True,
             check=False,
@@ -82,8 +77,8 @@ class OrdiaCommandsTests(unittest.TestCase):
         if not CATALOG.is_file() or not PACKAGE.is_file():
             self.skipTest("reference npm command catalog not present")
         proc = subprocess.run(
-            [sys.executable, str(CLI), "commands", "validate", "-C", str(ROOT)],
-            cwd=ROOT,
+            [*CLI_CMD, "commands", "validate", "-C", str(REPO_ROOT)],
+            cwd=REPO_ROOT,
             capture_output=True,
             text=True,
             check=False,
@@ -112,7 +107,3 @@ class OrdiaCommandsTests(unittest.TestCase):
             package_path.write_text(json.dumps({"scripts": {}}), encoding="utf-8")
             errors, _ = validate_catalog_sync(target, catalog_path, package_path)
             self.assertTrue(any("only-in-catalog" in err for err in errors))
-
-
-if __name__ == "__main__":
-    unittest.main()

@@ -6,20 +6,53 @@ on:
       - "ordia-core-v*"
 
 jobs:
-  pypi:
+  test:
     runs-on: ubuntu-latest
-    permissions:
-      id-token: write
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - run: python -m pip install -U pip build twine
-      - run: python scripts/sync_ordia_cursor_bundle.py --sync --product-only
+      - run: python -m pip install -U pip
+      - run: pip install -e "packages/ordia-core[dev]"
+      - run: python tools/sync_cursor_bundle.py --check --product-only
+      - run: pytest packages/ordia-core/tests -m "not wheel" --cov-fail-under=70
+      - run: pytest packages/ordia-core/tests -m wheel
+      - run: python tools/audits/product_docs_sync.py --check
+      - run: python tools/audits/docs_links.py --strict
+
+  build:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: python -m pip install -U pip build
+      - run: pip install -e packages/ordia-core
+      - run: python tools/verify_release_tag.py --check
+        env:
+          GITHUB_REF_NAME: ${{ github.ref_name }}
+      - run: python tools/sync_cursor_bundle.py --sync --product-only
       - run: python -m build --wheel --outdir dist
         working-directory: packages/ordia-core
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ordia-core-wheel
+          path: packages/ordia-core/dist/*.whl
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: ordia-core-wheel
+          path: dist
       - uses: pypa/gh-action-pypi-publish@release/v1
         with:
-          packages-dir: packages/ordia-core/dist/
+          packages-dir: dist/
           password: ${{ secrets.PYPI_API_TOKEN }}

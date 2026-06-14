@@ -1,0 +1,10 @@
+# Documentation inventory rules (paths relative to repo root).
+rules:
+  - pattern: "docs/ordia/**"
+    lifecycle: CORE
+    language: English
+    category: product
+  - pattern: "packages/ordia-core/docs/**"
+    lifecycle: CORE
+    language: English
+    category: package-manual

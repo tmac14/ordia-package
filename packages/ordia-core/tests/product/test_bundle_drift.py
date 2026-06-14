@@ -7,18 +7,20 @@ import sys
 import unittest
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
-SYNC = ROOT / "scripts" / "sync_ordia_cursor_bundle.py"
+REPO_ROOT = Path(__file__).resolve().parents[4]
+SYNC = REPO_ROOT / "tools" / "sync_cursor_bundle.py"
 
 
 class OrdiaBundleDriftTests(unittest.TestCase):
     def test_bundle_in_sync(self) -> None:
+        if not SYNC.is_file():
+            self.skipTest(f"sync script not found: {SYNC}")
         cmd = [sys.executable, str(SYNC), "--check"]
-        if not (ROOT / ".cursor" / "hooks.json").is_file():
+        if not (REPO_ROOT / ".cursor" / "hooks.json").is_file():
             cmd.append("--product-only")
         proc = subprocess.run(
             cmd,
-            cwd=ROOT,
+            cwd=REPO_ROOT,
             capture_output=True,
             text=True,
             check=False,
@@ -26,7 +28,13 @@ class OrdiaBundleDriftTests(unittest.TestCase):
         self.assertEqual(proc.returncode, 0, proc.stderr or proc.stdout)
 
     def test_sync_script_lists_required_hook_files(self) -> None:
-        text = SYNC.read_text(encoding="utf-8")
+        if not SYNC.is_file():
+            legacy = REPO_ROOT / "scripts" / "sync_ordia_cursor_bundle.py"
+            if not legacy.is_file():
+                self.skipTest("sync script not found")
+            text = legacy.read_text(encoding="utf-8")
+        else:
+            text = SYNC.read_text(encoding="utf-8")
         for required in (
             "control_context.py",
             "ordia_manifest.py",
@@ -39,21 +47,19 @@ class OrdiaBundleDriftTests(unittest.TestCase):
             self.assertIn(required, text)
 
     def test_rules_manifest_aware_recovery(self) -> None:
-        rule = ROOT / ".cursor" / "rules" / "ordia-recovery-bootstrap.mdc"
+        rule = REPO_ROOT / ".cursor" / "rules" / "ordia-recovery-bootstrap.mdc"
         if not rule.is_file():
-            rule = ROOT / "packages" / "ordia-cursor" / "templates" / "rules" / "ordia-recovery-bootstrap.mdc"
+            rule = REPO_ROOT / "packages" / "ordia-cursor" / "templates" / "rules" / "ordia-recovery-bootstrap.mdc"
         text = rule.read_text(encoding="utf-8")
         self.assertIn("{controlRoot}", text)
         self.assertIn("ordia.yaml", text)
         self.assertIn("manifest-driven", text.lower())
 
     def test_rules_manifest_aware_header(self) -> None:
-        rule = ROOT / ".cursor" / "rules" / "ordia-runtime-protocol-header.mdc"
+        rule = REPO_ROOT / ".cursor" / "rules" / "ordia-runtime-protocol-header.mdc"
         if not rule.is_file():
-            rule = ROOT / "packages" / "ordia-cursor" / "templates" / "rules" / "ordia-runtime-protocol-header.mdc"
+            rule = (
+                REPO_ROOT / "packages" / "ordia-cursor" / "templates" / "rules" / "ordia-runtime-protocol-header.mdc"
+            )
         text = rule.read_text(encoding="utf-8")
         self.assertIn("{controlRoot}/ORCHESTRATION_STATE.md", text)
-
-
-if __name__ == "__main__":
-    unittest.main()

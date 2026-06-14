@@ -2,17 +2,28 @@
 
 from __future__ import annotations
 
+import logging
 import os
 import re
+import shlex
 import subprocess
 from pathlib import Path
 from typing import Any
 
 from ordia.validator.common import Validation
 
-DEFAULT_CLOSURE_VALIDATOR = "npm run control:validate"
+logger = logging.getLogger(__name__)
+
+DEFAULT_CLOSURE_VALIDATOR = "npm run ordia:validate"
 DEFAULT_VALIDATOR_TIMEOUT = 120
 CLOSURE_VALIDATOR_ACTIVE_ENV = "ORDIA_CLOSURE_VALIDATOR_ACTIVE"
+
+ALLOWED_PREFIXES = (
+    "npm run ",
+    "ordia ",
+    "python -m ordia",
+    "python tools/",
+)
 
 
 def validated_task_ids(registry: dict[str, Any]) -> list[str]:
@@ -30,6 +41,21 @@ def validated_task_ids(registry: dict[str, Any]) -> list[str]:
     return ids
 
 
+def parse_closure_command(command: str) -> list[str] | None:
+    """Parse an allowlisted closure.validator command into argv."""
+    command = command.strip()
+    if not command:
+        return None
+    if not any(command.startswith(prefix) for prefix in ALLOWED_PREFIXES):
+        logger.warning("closure.validator rejected (not allowlisted): %r", command)
+        return None
+    try:
+        return shlex.split(command, posix=(os.name != "nt"))
+    except ValueError as exc:
+        logger.warning("closure.validator parse failed: %s", exc)
+        return None
+
+
 def run_closure_validator_command(
     command: str,
     root: Path,
@@ -40,16 +66,19 @@ def run_closure_validator_command(
 
     ``exit_code`` is ``None`` when the subprocess could not be started.
     """
-    command = command.strip()
-    if not command:
-        return None, "empty closure.validator command"
+    argv = parse_closure_command(command)
+    if argv is None:
+        detail = "empty or disallowed closure.validator command"
+        if command.strip():
+            detail = f"closure.validator command not allowlisted: {command!r}"
+        return None, detail
 
     try:
         env = os.environ.copy()
         env[CLOSURE_VALIDATOR_ACTIVE_ENV] = "1"
         completed = subprocess.run(
-            command,
-            shell=True,
+            argv,
+            shell=False,
             cwd=root,
             capture_output=True,
             text=True,
@@ -58,6 +87,7 @@ def run_closure_validator_command(
             env=env,
         )
     except (OSError, subprocess.SubprocessError) as exc:
+        logger.warning("closure.validator subprocess failed: %s", exc)
         return None, str(exc)
 
     detail_parts: list[str] = []

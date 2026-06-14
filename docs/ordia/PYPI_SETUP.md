@@ -11,7 +11,7 @@ CI publish failed because neither **trusted publishing** nor **`PYPI_API_TOKEN`*
    ```
 3. Re-run publish workflow:
    ```powershell
-   gh workflow run publish.yml -R tmac14/ordia-package --ref ordia-core-v0.8.0
+   gh workflow run publish.yml -R tmac14/ordia-package --ref ordia-core-v0.9.1
    ```
    Or delete and re-push the tag.
 
@@ -26,7 +26,7 @@ On https://pypi.org/manage/project/ordia-core/settings/publishing/ (create proje
 | Workflow | `publish.yml` |
 | Environment | *(leave empty)* |
 
-Then re-run the workflow on tag `ordia-core-v0.8.0`.
+Then re-run the workflow on tag `ordia-core-v0.9.1`.
 
 ## Manual upload (local)
 
@@ -36,4 +36,4 @@ python -m build
 python -m twine upload dist/*
 ```
 
-After publish, verify: `pip install ordia-core==0.8.0`
+After publish, verify: `pip install ordia-core==0.9.1`

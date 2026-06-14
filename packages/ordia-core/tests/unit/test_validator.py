@@ -9,24 +9,19 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-ROOT = Path(__file__).resolve().parents[1]
-CLI = ROOT / "scripts" / "ordia_cli.py"
-sys.path.insert(0, str(ROOT / "scripts"))
-from _ordia_bootstrap import ensure_ordia_core
+from ordia.config import load_ordia_config
+from ordia.validator.common import Validation
+from ordia.validator.closure import CLOSURE_VALIDATOR_ACTIVE_ENV, validate_closure_gate
+from ordia.validator.profile import validate_profile_match
+from ordia.validator.project import ProjectValidationOptions, validate_project
 
-ensure_ordia_core()
-
-from ordia.config import load_ordia_config  # noqa: E402
-from ordia.validator.common import Validation  # noqa: E402
-from ordia.validator.closure import CLOSURE_VALIDATOR_ACTIVE_ENV, validate_closure_gate  # noqa: E402
-from ordia.validator.profile import validate_profile_match  # noqa: E402
-from ordia.validator.project import ProjectValidationOptions, validate_project  # noqa: E402
+REPO_ROOT = Path(__file__).resolve().parents[4]
+CLI_CMD = [sys.executable, "-m", "ordia.cli"]
 
 
 class OrdiaValidatorTests(unittest.TestCase):
     def test_profile_match_warns_by_default(self) -> None:
-        root = Path(__file__).resolve().parents[1]
-        config = load_ordia_config(root)
+        config = load_ordia_config(REPO_ROOT)
         if config is None:
             self.skipTest("no ordia.yaml in repo root")
         errors: list[str] = []
@@ -36,8 +31,7 @@ class OrdiaValidatorTests(unittest.TestCase):
         self.assertEqual(len(warnings), 1)
 
     def test_profile_match_strict_fails(self) -> None:
-        root = Path(__file__).resolve().parents[1]
-        config = load_ordia_config(root)
+        config = load_ordia_config(REPO_ROOT)
         if config is None:
             self.skipTest("no ordia.yaml in repo root")
         errors: list[str] = []
@@ -50,16 +44,16 @@ class OrdiaValidatorTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             target = Path(tmp)
             init = subprocess.run(
-                [sys.executable, str(CLI), "init", "--directory", str(target), "--profile", "gf-val"],
-                cwd=ROOT,
+                [*CLI_CMD, "init", "--directory", str(target), "--profile", "gf-val"],
+                cwd=REPO_ROOT,
                 capture_output=True,
                 text=True,
                 check=False,
             )
             self.assertEqual(init.returncode, 0, init.stderr or init.stdout)
             validate = subprocess.run(
-                [sys.executable, str(CLI), "validate", "--project", "--directory", str(target)],
-                cwd=ROOT,
+                [*CLI_CMD, "validate", "--project", "--directory", str(target)],
+                cwd=REPO_ROOT,
                 capture_output=True,
                 text=True,
                 check=False,
@@ -71,8 +65,8 @@ class OrdiaValidatorTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             target = Path(tmp)
             init = subprocess.run(
-                [sys.executable, str(CLI), "init", "--directory", str(target), "--profile", "gf-closure"],
-                cwd=ROOT,
+                [*CLI_CMD, "init", "--directory", str(target), "--profile", "gf-closure"],
+                cwd=REPO_ROOT,
                 capture_output=True,
                 text=True,
                 check=False,
@@ -119,7 +113,7 @@ class OrdiaValidatorTests(unittest.TestCase):
                 registry,
                 "T1 evidence",
                 "- Active task ID: `NONE`",
-                ROOT,
+                REPO_ROOT,
                 result,
                 closure_validator="npm run control:validate",
                 strict=False,
@@ -141,7 +135,7 @@ class OrdiaValidatorTests(unittest.TestCase):
                 registry,
                 "T1",
                 "- Active task ID: `NONE`",
-                ROOT,
+                REPO_ROOT,
                 result,
                 strict=True,
             )
@@ -152,7 +146,7 @@ class OrdiaValidatorTests(unittest.TestCase):
         registry = {"tasks": [{"id": "T1", "status": "IN_FLIGHT"}], "queues": {}}
         result = Validation()
         with patch("ordia.validator.closure.run_closure_validator_command") as mock_run:
-            validate_closure_gate(registry, "", "", ROOT, result)
+            validate_closure_gate(registry, "", "", REPO_ROOT, result)
         mock_run.assert_not_called()
 
     def test_closure_validator_skips_subprocess_when_reentrant(self) -> None:
@@ -163,15 +157,15 @@ class OrdiaValidatorTests(unittest.TestCase):
         result = Validation()
         with patch("ordia.validator.closure.run_closure_validator_command") as mock_run:
             with patch.dict("os.environ", {CLOSURE_VALIDATOR_ACTIVE_ENV: "1"}):
-                validate_closure_gate(registry, "T1", "", ROOT, result)
+                validate_closure_gate(registry, "T1", "", REPO_ROOT, result)
         mock_run.assert_not_called()
 
     def test_strict_closure_fails_on_validator_error(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             target = Path(tmp)
             init = subprocess.run(
-                [sys.executable, str(CLI), "init", "--directory", str(target), "--profile", "gf-strict-cl"],
-                cwd=ROOT,
+                [*CLI_CMD, "init", "--directory", str(target), "--profile", "gf-strict-cl"],
+                cwd=REPO_ROOT,
                 capture_output=True,
                 text=True,
                 check=False,
@@ -288,8 +282,6 @@ class OrdiaValidatorTests(unittest.TestCase):
                 }
             ]
         }
-        import tempfile
-
         with tempfile.TemporaryDirectory() as tmp:
             packet_dir = Path(tmp)
             (packet_dir / "IMPORT-TASK.md").write_text(
@@ -309,7 +301,3 @@ class OrdiaValidatorTests(unittest.TestCase):
                 profile_registry={"track_minimums": {"IMPORT": "T2"}},
             )
         self.assertTrue(any("below required minimum T3" in w for w in result.warnings))
-
-
-if __name__ == "__main__":
-    unittest.main()

@@ -4,17 +4,25 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
+import logging
+import os
 import shlex
 import shutil
 import subprocess
 import sys
 from datetime import date
 from pathlib import Path
+from typing import Any
 
 from ordia.bootstrap import repo_root_from_core
 from ordia.config import load_ordia_config, templates_root, validate_ordia_manifest
 from ordia.protocols import protocols_root
+
+_log_level = getattr(logging, os.environ.get("ORDIA_LOG", "WARNING").upper(), logging.WARNING)
+logging.basicConfig(level=_log_level, format="%(levelname)s ordia: %(message)s")
+logger = logging.getLogger(__name__)
 
 
 def cursor_bundle_root() -> Path | None:
@@ -210,6 +218,18 @@ def cmd_init(args: argparse.Namespace) -> int:
         doc_written = _install_package_docs(target)
         written.extend(doc_written)
 
+    if getattr(args, "sync_commands", False):
+        package_json = target / "package.json"
+        if package_json.is_file():
+            from ordia.commands.catalog import resolve_catalog_paths, seed_catalog_from_package
+
+            cfg = load_ordia_config(target)
+            catalog_path, pkg_path = resolve_catalog_paths(target, cfg)
+            count = seed_catalog_from_package(target, catalog_path, pkg_path, profile=profile)
+            print(f"- synced commands.catalog.json from package.json ({count} commands)")
+        else:
+            print("WARNING: --sync-commands skipped (no package.json in target)", file=sys.stderr)
+
     print(f"Ordia init complete — profile={profile!r} template={template_name!r}")
     print(f"- wrote {manifest.relative_to(target)}")
     for path in written:
@@ -223,7 +243,7 @@ def cmd_init(args: argparse.Namespace) -> int:
         print("- installed package documentation under docs/ordia/package/")
     if protocol_written:
         print(f"- installed {len(protocol_written)} protocol templates under docs/control/protocols/")
-    print("Next: npm run ordia:validate")
+    print("Next: ordia validate")
     return 0
 
 
@@ -374,6 +394,37 @@ def _verify_hook_commands(root: Path) -> list[str]:
     return issues
 
 
+def _verify_hook_integrity(root: Path) -> list[str]:
+    """Warn when installed hook scripts differ from bundled manifest hashes."""
+    warnings: list[str] = []
+    bundle = cursor_bundle_root()
+    if bundle is None:
+        return warnings
+    manifest_path = bundle / "hooks.manifest.json"
+    if not manifest_path.is_file():
+        return warnings
+    try:
+        expected = json.loads(manifest_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        warnings.append("Could not read bundled hooks.manifest.json for integrity check")
+        return warnings
+    if not isinstance(expected, dict):
+        return warnings
+    hooks_dir = root / ".cursor"
+    for rel, digest in expected.items():
+        if not isinstance(rel, str) or not isinstance(digest, str):
+            continue
+        installed = hooks_dir / rel.replace("/", "\\") if os.name == "nt" else hooks_dir / rel
+        if not installed.is_file():
+            continue
+        actual = hashlib.sha256(installed.read_bytes()).hexdigest()
+        if actual != digest:
+            warnings.append(
+                f"Hook integrity: {rel} differs from ordia-core bundle (possible local edit)"
+            )
+    return warnings
+
+
 def _commands_paths(args: argparse.Namespace) -> tuple[Path, Path, Path]:
     root = Path(args.directory).resolve()
     config = load_ordia_config(root)
@@ -454,8 +505,8 @@ def cmd_model_recommend(args: argparse.Namespace) -> int:
                         if isinstance(entry, dict) and str(entry.get("id")) == task_id:
                             task_entry = entry
                             break
-            except Exception:  # noqa: BLE001
-                pass
+            except Exception as exc:  # noqa: BLE001
+                logger.debug("task registry lookup failed for %s: %s", task_id, exc)
 
     runtime = args.runtime or "ONLY_CURSOR"
     config_default_tier = config.models_default_tier if config is not None else None
@@ -585,13 +636,13 @@ def cmd_doctor(args: argparse.Namespace) -> int:
 
     manifest = root / "ordia.yaml"
     if not manifest.is_file():
-        issues.append("ordia.yaml is missing — run: npm run ordia:init")
+        issues.append("ordia.yaml is missing — run: ordia init")
     else:
         hints.append(f"manifest: {manifest.relative_to(root)}")
 
     config = load_ordia_config(root)
     if config is None and manifest.is_file():
-        issues.append("ordia.yaml could not be loaded (install PyYAML: npm run control:install)")
+        issues.append("ordia.yaml could not be loaded (install PyYAML: pip install pyyaml)")
     elif config is not None:
         errors: list[str] = []
         warnings: list[str] = []
@@ -606,6 +657,8 @@ def cmd_doctor(args: argparse.Namespace) -> int:
     if hooks_json.is_file():
         hints.append("Cursor hooks: installed")
         issues.extend(_verify_hook_commands(root))
+        for warning in _verify_hook_integrity(root):
+            hints.append(f"warning: {warning}")
     else:
         hints.append("Cursor hooks: not installed (optional: ordia init --with-cursor)")
     if manifest_loader.is_file():
@@ -637,7 +690,7 @@ def cmd_doctor(args: argparse.Namespace) -> int:
     try:
         import yaml  # noqa: F401
     except ImportError:
-        issues.append("PyYAML not installed — run: npm run control:install")
+        issues.append("PyYAML not installed — run: pip install pyyaml")
 
     print("Ordia doctor")
     for hint in hints:

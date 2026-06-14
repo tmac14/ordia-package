@@ -17,15 +17,15 @@ try:
 except ImportError:  # pragma: no cover
     yaml = None  # type: ignore[assignment]
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 DOCS_ROOT = ROOT / "docs"
-INVENTORY = DOCS_ROOT / "docs_inventory.yaml"
+INVENTORY = ROOT / "docs" / "docs_inventory.yaml"
 LINK_RE = re.compile(r"\]\(([^)#]+)(?:#[^)]*)?\)")
 
 
 def _load_rules(path: Path) -> list[dict[str, str]]:
     if yaml is None:
-        raise RuntimeError("PyYAML required — run: npm run control:install")
+        raise RuntimeError("PyYAML required — run: pip install pyyaml")
     data = yaml.safe_load(path.read_text(encoding="utf-8"))
     rules = data.get("rules", []) if isinstance(data, dict) else []
     if not isinstance(rules, list):

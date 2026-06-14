@@ -1,6 +1,6 @@
 # Ordia Core Package Documentation
 
-**Package:** `ordia-core` **0.8.0**  
+**Package:** `ordia-core` **0.10.0**  
 **Program:** Ordia v0.8 — documentation + workflow intents closeout  
 **Authority:** [SPEC v0.8](../../../docs/ordia/SPEC_v0.8.md) · [IMPROVEMENT_PLAN v0.8](../../../docs/ordia/IMPROVEMENT_PLAN_v0.8.md)
 
@@ -68,7 +68,7 @@ npm run ordia:doctor
 ### Greenfield (wheel or editable install)
 
 ```powershell
-pip install ordia-core==0.8.0
+pip install ordia-core==0.10.0
 ordia init --with-cursor --directory ./my-project
 cd my-project
 ordia validate --project
@@ -99,7 +99,7 @@ packages/ordia-core/
 │   ├── templates/             # minimal | monorepo scaffolds
 │   └── protocols/             # six portable protocol templates
 ├── docs/                      # ← you are here (B-06)
-├── pyproject.toml             # 0.8.0 + package-data
+├── pyproject.toml             # 0.10.0 + package-data
 └── README.md                  # one-screen package summary
 ```
 
@@ -193,7 +193,7 @@ When changing public API (`ordia.config`, `ordia.cli`, `ordia.validator`):
 
 1. Update the relevant doc in this tree.
 2. Bump `CHANGELOG.md` under **Unreleased** or the target semver section.
-3. Run `npm run control:test` in the reference repo.
+3. Run `pytest packages/ordia-core/tests` in this repo.
 4. If behavior affects greenfield, update protocol templates under `ordia/protocols/`.
 
 Package documentation is English-canonical per **ORDIA-D019** and ships in the wheel

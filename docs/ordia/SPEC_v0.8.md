@@ -13,11 +13,11 @@ v0.8 adds a **portable workflow intent layer**: stable taxonomy of development a
 
 | Area | Path |
 |------|------|
-| Spike | [WORKFLOW_INTENTS_SPIKE.md](./WORKFLOW_INTENTS_SPIKE.md) |
+| Spike | WORKFLOW_INTENTS_SPIKE (repo-only; not in portable wheel subset) |
 | Daily guide | [DAILY_USAGE.md](./DAILY_USAGE.md) |
 | Core module | `packages/ordia-core/ordia/workflows/` |
 | CLI | `ordia workflow list\|describe`, `ordia prompt emit\|header` |
-| Profile overlay | `docs/coordination/workflows/intents.narofitness.yaml` |
+| Profile overlay | `docs/control/workflows/intents.{profile}.yaml` |
 | Catalog | `workflowIntents[]` in `scripts/commands.catalog.json` |
 | Hooks | Warn-only unknown `intent:` (`workflow_intents_lite.py`) |
 | Tests | `scripts/test_ordia_workflows.py` |
@@ -51,4 +51,4 @@ See WORKFLOW_INTENTS_SPIKE §7.
 
 ## Closure
 
-Program slice **CLOSED** — see [IMPROVEMENT_PLAN_v0.8.md](./IMPROVEMENT_PLAN_v0.8.md).
+Program slice **CLOSED** — see [CHANGELOG](https://github.com/tmac14/ordia-package/blob/main/packages/ordia-core/docs/CHANGELOG.md).

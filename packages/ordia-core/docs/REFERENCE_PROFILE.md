@@ -26,7 +26,7 @@ Contributors to the Narofitness repo, control-plane operators, and architects
 | `profile` | `narofitness` | `default` |
 | `control.root` | `docs/coordination` | `docs/control` |
 | Protocol layout | Flat `*_PROTOCOL.md` | `docs/control/protocols/` |
-| Closure command | `npm run control:validate` | `npm run ordia:validate` |
+| Closure command | `ordia validate --project` (pip) | `npm run ordia:validate` (npm wrapper) |
 | Extra guardrail rule | `narofitness-permanent-guardrails.mdc` | none |
 | Command catalog | Root `COMMANDS.md` + JSON | Optional overlay |
 | Product root | `apps/` | `src/` or `apps/` (monorepo) |
@@ -70,7 +70,7 @@ enforcement:
   unifiedRequiresApproval: true
 
 closure:
-  validator: npm run control:validate
+  validator: ordia validate --project
 ```
 
 Program baseline: [IMPROVEMENT_PLAN v0.6](../../../docs/ordia/IMPROVEMENT_PLAN_v0.6.md).
@@ -156,7 +156,7 @@ of copying Narofitness IMPORT-FDL rules.
 ## Validation wrapper
 
 ```text
-npm run control:validate
+ordia validate --project
   → scripts/validate_project_control.py
       → ordia.validator.project.validate_project()
       → ProjectValidationOptions(
@@ -188,7 +188,7 @@ Session profile read from `.cursor/session-protocol.json` → `ordia_profile`.
 | `control:test` | All `scripts/test_ordia*.py` + related suites |
 | `control:install` | PyYAML + editable ordia-core |
 
-Catalog: root [COMMANDS.md](../../../COMMANDS.md) — profile overlay on
+Catalog: [COMMANDS.md](./COMMANDS.md) — profile overlay on
 [COMMANDS.md](./COMMANDS.md) L1 spec.
 
 ---
@@ -255,7 +255,7 @@ Same as portable rules — only paths differ.
 |---|---|---|
 | Inventory validation fails | New coordination doc not in inventory | Update DOCUMENTATION_INVENTORY.md |
 | Missing guardrails rule | Bundle drift | `sync_ordia_cursor_bundle.py --sync` |
-| Upgrade ordia-core | Closure env guard missing | Upgrade ordia-core 0.8.0+ |
+| Upgrade ordia-core | Closure env guard missing | Upgrade ordia-core 0.10.0+ |
 | Profile strict fails | session ordia_profile stale | Re-declare headers |
 | Duplicate template confusion | Old docs/ordia/templates | Removed ORDIA-D021 — use package only |
 
@@ -267,6 +267,6 @@ Same as portable rules — only paths differ.
 - Generic validator → [VALIDATOR.md](./VALIDATOR.md)
 - Protocol routing → [PROTOCOLS.md](./PROTOCOLS.md)
 - Greenfield without exceptions → [GREENFIELD.md](./GREENFIELD.md)
-- Project AGENTS.md → [AGENTS.md](../../../AGENTS.md)
+- Project AGENTS.md → greenfield `docs/control/PROFILE.md` via `ordia init`
 
-External specs: [SPEC v0.8](../../../docs/ordia/SPEC_v0.8.md), [DECISION_LOG](../../../docs/coordination/DECISION_LOG.md) (`ORDIA-D001`–`ORDIA-D023`).
+External specs: [SPEC v0.8](../../../docs/ordia/SPEC_v0.8.md).

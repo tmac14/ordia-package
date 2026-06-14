@@ -2,28 +2,32 @@
 
 from __future__ import annotations
 
-import json
 import subprocess
 import sys
 import tempfile
 import unittest
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
-CLI = ROOT / "scripts" / "ordia_cli.py"
-RECOVERY_RULE = ROOT / "packages" / "ordia-core" / "ordia" / "cursor_bundle" / "rules" / "ordia-recovery-bootstrap.mdc"
+import pytest
+
+REPO_ROOT = Path(__file__).resolve().parents[4]
+CORE_ROOT = REPO_ROOT / "packages" / "ordia-core"
+CLI_CMD = [sys.executable, "-m", "ordia.cli"]
+RECOVERY_RULE = CORE_ROOT / "ordia" / "cursor_bundle" / "rules" / "ordia-recovery-bootstrap.mdc"
 if not RECOVERY_RULE.is_file():
-    RECOVERY_RULE = ROOT / ".cursor" / "rules" / "ordia-recovery-bootstrap.mdc"
+    RECOVERY_RULE = REPO_ROOT / ".cursor" / "rules" / "ordia-recovery-bootstrap.mdc"
 if not RECOVERY_RULE.is_file():
     RECOVERY_RULE = (
-        ROOT / "packages" / "ordia-cursor" / "templates" / "rules" / "ordia-recovery-bootstrap.mdc"
+        REPO_ROOT / "packages" / "ordia-cursor" / "templates" / "rules" / "ordia-recovery-bootstrap.mdc"
     )
+
+pytestmark = pytest.mark.integration
 
 
 class OrdiaGreenfieldTests(unittest.TestCase):
     def _init(self, target: Path, *extra: str) -> subprocess.CompletedProcess[str]:
-        cmd = [sys.executable, str(CLI), "init", "--directory", str(target), *extra]
-        return subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True, check=False)
+        cmd = [*CLI_CMD, "init", "--directory", str(target), *extra]
+        return subprocess.run(cmd, cwd=REPO_ROOT, capture_output=True, text=True, check=False)
 
     def test_greenfield_with_cursor_validate_and_doctor(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -32,8 +36,8 @@ class OrdiaGreenfieldTests(unittest.TestCase):
             self.assertEqual(init.returncode, 0, init.stderr or init.stdout)
 
             validate = subprocess.run(
-                [sys.executable, str(CLI), "validate", "--directory", str(target)],
-                cwd=ROOT,
+                [*CLI_CMD, "validate", "--directory", str(target)],
+                cwd=REPO_ROOT,
                 capture_output=True,
                 text=True,
                 check=False,
@@ -41,8 +45,8 @@ class OrdiaGreenfieldTests(unittest.TestCase):
             self.assertEqual(validate.returncode, 0, validate.stderr or validate.stdout)
 
             doctor = subprocess.run(
-                [sys.executable, str(CLI), "doctor", "--directory", str(target)],
-                cwd=ROOT,
+                [*CLI_CMD, "doctor", "--directory", str(target)],
+                cwd=REPO_ROOT,
                 capture_output=True,
                 text=True,
                 check=False,
@@ -165,15 +169,14 @@ class OrdiaGreenfieldTests(unittest.TestCase):
         self.assertIn("{controlRoot}/ORCHESTRATION_STATE.md", text)
         self.assertIn("{projectProfile}", text)
 
-
     def test_greenfield_validate_project_cli(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             target = Path(tmp)
             init = self._init(target, "--with-cursor", "--profile", "gf-test")
             self.assertEqual(init.returncode, 0, init.stderr or init.stdout)
             validate = subprocess.run(
-                [sys.executable, str(CLI), "validate", "--project", "--directory", str(target)],
-                cwd=ROOT,
+                [*CLI_CMD, "validate", "--project", "--directory", str(target)],
+                cwd=REPO_ROOT,
                 capture_output=True,
                 text=True,
                 check=False,
@@ -208,7 +211,6 @@ class OrdiaGreenfieldTests(unittest.TestCase):
             task_exec = (protocols_dir / "TASK_EXECUTION.md").read_text(encoding="utf-8")
             self.assertIn("gf-proto", task_exec)
 
-
     def test_greenfield_product_docs_installed(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             target = Path(tmp)
@@ -218,6 +220,16 @@ class OrdiaGreenfieldTests(unittest.TestCase):
             for name in ("README.md", "DAILY_USAGE.md", "SPEC_v0.8.md"):
                 self.assertTrue((ordia_docs / name).is_file(), f"missing {name}")
 
-
-if __name__ == "__main__":
-    unittest.main()
+    def test_init_sync_commands_seeds_catalog(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            target = Path(tmp)
+            (target / "package.json").write_text(
+                '{"name":"sync-test","scripts":{"ordia:doctor":"ordia doctor","build":"echo build"}}',
+                encoding="utf-8",
+            )
+            init = self._init(target, "--profile", "sync-test", "--sync-commands")
+            self.assertEqual(init.returncode, 0, init.stderr or init.stdout)
+            catalog = target / "docs" / "control" / "commands.catalog.json"
+            self.assertTrue(catalog.is_file(), "expected commands.catalog.json")
+            text = catalog.read_text(encoding="utf-8")
+            self.assertIn("ordia:doctor", text)

@@ -3,7 +3,7 @@
 **Status:** ACTIVE — package excellence, commands framework, publish readiness  
 **Decisions:** `ORDIA-D014`–`ORDIA-D021`  
 **Date:** 2026-06-14  
-**Builds on:** [SPEC_v0.5.md](./SPEC_v0.5.md) · [IMPROVEMENT_PLAN_v0.6.md](./IMPROVEMENT_PLAN_v0.6.md)
+**Builds on:** prior v0.5 program (historical) · see [SPEC_v0.7.md](./SPEC_v0.7.md) for later work
 
 ## 1. Summary
 
@@ -33,7 +33,7 @@ When tasks reach `VALIDATED`, the generic validator runs `closure.validator` fro
 |---|---|
 | Default | Warning if closure command exits non-zero |
 | `--strict-closure` | Error |
-| Reentrancy | `ORDIA_CLOSURE_VALIDATOR_ACTIVE=1` skips nested run (Narofitness uses `npm run control:validate`) |
+| Reentrancy | `ORDIA_CLOSURE_VALIDATOR_ACTIVE=1` skips nested run |
 
 ## 4. Packaging (Slice 3)
 
@@ -130,11 +130,11 @@ python scripts/ordia_cli.py commands validate
 | `scripts/test_ordia_bundle_drift.py` | live vs template parity |
 | `scripts/test_ordia_doc_links.py` | AGENTS.md Ordia links, no duplicate templates |
 | `scripts/audit_command_catalog_coverage.py --check` | L1/L2/L3 coverage report |
-| `npm run control:test` | full control plane suite (**75** tests) |
+| `pytest packages/ordia-core/tests` | full ordia-core suite |
 
 ## 9. Non-goals (v0.6)
 
-- PyPI / Cursor marketplace **publish execution** (checklist only — see [PUBLISH_CHECKLIST.md](./PUBLISH_CHECKLIST.md))
+- PyPI publish execution — see GitHub Actions `publish.yml`
 - Full `docs/` tree cleanup and Spanish doc migration (Workstreams E — Slices 7–8)
 - Shell/git hook guard implementation (`ORDIA-D018` — spike only)
 - Renaming Narofitness `docs/coordination/`
@@ -142,6 +142,5 @@ python scripts/ordia_cli.py commands validate
 
 ## 10. Post-v0.6
 
-- [IMPROVEMENT_PLAN_v0.6.md](./IMPROVEMENT_PLAN_v0.6.md) Slices 7–8 — documentation cleanup program
-- [PUBLISH_CHECKLIST.md](./PUBLISH_CHECKLIST.md) — pre-publish gates at **0.6.0**
-- [CODEX_ENFORCEMENT_SPIKE.md](./CODEX_ENFORCEMENT_SPIKE.md) — Codex-only MVE (`ORDIA-D012`)
+- [SPEC_v0.7.md](./SPEC_v0.7.md) — model routing
+- [SPEC_v0.8.md](./SPEC_v0.8.md) — workflow intents

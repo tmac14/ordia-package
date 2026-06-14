@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import json
 import re
 import shutil
 import sys
@@ -81,6 +82,16 @@ def _mirror_template_to_wheel() -> None:
     shutil.copytree(TEMPLATE, WHEEL_BUNDLE)
 
 
+def write_hooks_manifest() -> None:
+    manifest: dict[str, str] = {}
+    for relative in HOOK_FILES:
+        path = WHEEL_BUNDLE / relative
+        if path.is_file():
+            manifest[relative] = _sha256(path)
+    manifest_path = WHEEL_BUNDLE / "hooks.manifest.json"
+    manifest_path.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
+
+
 def cmd_check(*, product_only: bool = False) -> int:
     errors: list[str] = []
     if not product_only:
@@ -121,7 +132,7 @@ def cmd_check(*, product_only: bool = False) -> int:
         print("Ordia Cursor bundle drift detected:", file=sys.stderr)
         for error in errors:
             print(f"- {error}", file=sys.stderr)
-        print("Run: python scripts/sync_ordia_cursor_bundle.py --sync", file=sys.stderr)
+        print("Run: python tools/sync_cursor_bundle.py --sync", file=sys.stderr)
         return 1
     label = "template, wheel" if product_only else "live, template, wheel"
     print(f"Ordia Cursor bundle: in sync ({label})")
@@ -131,7 +142,8 @@ def cmd_check(*, product_only: bool = False) -> int:
 def cmd_sync(*, product_only: bool = False) -> int:
     if product_only:
         _mirror_template_to_wheel()
-        print("Ordia Cursor bundle synced: template → ordia/cursor_bundle/")
+        write_hooks_manifest()
+        print("Ordia Cursor bundle synced: template -> ordia/cursor_bundle/")
         return cmd_check(product_only=True)
     TEMPLATE.mkdir(parents=True, exist_ok=True)
     (TEMPLATE / "hooks" / "lib").mkdir(parents=True, exist_ok=True)
@@ -150,6 +162,7 @@ def cmd_sync(*, product_only: bool = False) -> int:
         )
         template_hooks.write_text(text, encoding="utf-8")
     _mirror_template_to_wheel()
+    write_hooks_manifest()
     print("Ordia Cursor bundle synced to packages/ordia-cursor/templates/ and ordia/cursor_bundle/")
     return cmd_check(product_only=product_only)
 

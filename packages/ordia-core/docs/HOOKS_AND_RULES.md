@@ -246,7 +246,7 @@ Environment variable set by closure subprocess (`ordia.validator.closure`):
 env[CLOSURE_VALIDATOR_ACTIVE_ENV] = "1"  # "ORDIA_CLOSURE_VALIDATOR_ACTIVE"
 ```
 
-Purpose: when `closure.validator` runs `npm run control:validate`, nested
+Purpose: when `closure.validator` runs `ordia validate --project`, nested
 `validate_closure_gate` skips spawning another subprocess — prevents infinite loop.
 
 Hooks do **not** read this variable; validator only.

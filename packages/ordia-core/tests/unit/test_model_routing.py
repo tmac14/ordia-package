@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Tests for Ordia model tier routing (v0.7)."""
 
 from __future__ import annotations
@@ -6,16 +5,10 @@ from __future__ import annotations
 import json
 import subprocess
 import sys
-import tempfile
 import unittest
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
-CORE = ROOT / "packages" / "ordia-core"
-if str(CORE) not in sys.path:
-    sys.path.insert(0, str(CORE))
-
-from ordia.model_routing import (  # noqa: E402
+from ordia.model_routing import (
     load_registry,
     model_slug_to_tier,
     normalize_tier,
@@ -23,13 +16,17 @@ from ordia.model_routing import (  # noqa: E402
     tier_at_least,
 )
 
+REPO_ROOT = Path(__file__).resolve().parents[4]
+CORE_ROOT = REPO_ROOT / "packages" / "ordia-core"
+CLI_CMD = [sys.executable, "-m", "ordia.cli"]
+
 
 class ModelRoutingTests(unittest.TestCase):
     def setUp(self) -> None:
-        self.registry_path = ROOT / "docs" / "coordination" / "MODEL_REGISTRY.yaml"
+        self.registry_path = REPO_ROOT / "docs" / "coordination" / "MODEL_REGISTRY.yaml"
         if not self.registry_path.is_file():
             self.registry_path = (
-                CORE / "ordia" / "templates" / "minimal" / "docs" / "control" / "MODEL_REGISTRY.yaml"
+                CORE_ROOT / "ordia" / "templates" / "minimal" / "docs" / "control" / "MODEL_REGISTRY.yaml"
             )
         self.registry = load_registry(self.registry_path)
 
@@ -52,7 +49,7 @@ class ModelRoutingTests(unittest.TestCase):
         rec = recommend_for_task(
             "IMPORT-FDL-FULL-QUALITY-PAGE-11",
             registry=self.registry,
-            root=ROOT,
+            root=REPO_ROOT,
         )
         self.assertEqual(rec.tier, "T3")
 
@@ -60,7 +57,7 @@ class ModelRoutingTests(unittest.TestCase):
         rec = recommend_for_task(
             "APP-PLATFORM-UX-3.0-PHASE-2C",
             registry=self.registry,
-            root=ROOT,
+            root=REPO_ROOT,
             prompt="Explain how categories page works?",
         )
         self.assertEqual(rec.tier, "T0")
@@ -69,20 +66,20 @@ class ModelRoutingTests(unittest.TestCase):
         rec = recommend_for_task(
             "APP-PLATFORM-UX-3.0-PHASE-2C",
             registry=self.registry,
-            root=ROOT,
+            root=REPO_ROOT,
         )
         self.assertIn(rec.tier, ("T2", "T3"))
 
     def test_format_block_contains_approval_phrase(self) -> None:
-        rec = recommend_for_task("ORDIA-MODEL-ROUTING", registry=self.registry, root=ROOT)
+        rec = recommend_for_task("ORDIA-MODEL-ROUTING", registry=self.registry, root=REPO_ROOT)
         block = rec.format_block()
         self.assertIn("APPROVE MODEL", block)
         self.assertIn(rec.tier, block)
 
     def test_format_block_includes_economic_rating(self) -> None:
-        if not (ROOT / "docs" / "coordination" / "MODEL_REGISTRY.yaml").is_file():
+        if not (REPO_ROOT / "docs" / "coordination" / "MODEL_REGISTRY.yaml").is_file():
             self.skipTest("narofitness MODEL_REGISTRY not present")
-        rec = recommend_for_task("APP-PLATFORM-UX-3.0-PHASE-2C", registry=self.registry, root=ROOT)
+        rec = recommend_for_task("APP-PLATFORM-UX-3.0-PHASE-2C", registry=self.registry, root=REPO_ROOT)
         block = rec.format_block()
         self.assertIn("Economic rating:", block)
         self.assertIn("mediana", block.lower() + rec.economic_rating.lower())
@@ -103,10 +100,9 @@ class ModelRoutingTests(unittest.TestCase):
         self.assertIn("Tokens — prompt:", template)
 
     def test_cli_usage_template(self) -> None:
-        cli = ROOT / "scripts" / "ordia_cli.py"
         proc = subprocess.run(
-            [sys.executable, str(cli), "model", "usage-template"],
-            cwd=ROOT,
+            [*CLI_CMD, "model", "usage-template"],
+            cwd=REPO_ROOT,
             capture_output=True,
             text=True,
         )
@@ -117,7 +113,7 @@ class ModelRoutingTests(unittest.TestCase):
         rec = recommend_for_task(
             "IMPORT-FDL-FULL-QUALITY-NEXT",
             registry=self.registry,
-            root=ROOT,
+            root=REPO_ROOT,
             task_entry={"model_tier_min": "T3"},
         )
         self.assertEqual(rec.tier, "T3")
@@ -126,7 +122,7 @@ class ModelRoutingTests(unittest.TestCase):
         rec = recommend_for_task(
             "ORDIA-MODEL-ROUTING",
             registry=self.registry,
-            root=ROOT,
+            root=REPO_ROOT,
             config_default_tier="T2",
         )
         self.assertIn(rec.tier, ("T2", "T3"))
@@ -138,7 +134,7 @@ class ModelRoutingTests(unittest.TestCase):
         self.assertEqual(merged, "T2")
 
     def test_format_block_includes_rate_limit_guidance(self) -> None:
-        rec = recommend_for_task("ORDIA-MODEL-ROUTING", registry=self.registry, root=ROOT)
+        rec = recommend_for_task("ORDIA-MODEL-ROUTING", registry=self.registry, root=REPO_ROOT)
         block = rec.format_block()
         self.assertIn("Rate limits — Cursor", block)
         self.assertIn("Rate limits — Codex", block)
@@ -160,10 +156,9 @@ class ModelRoutingTests(unittest.TestCase):
         self.assertEqual(minimum, "T3")
 
     def test_cli_model_recommend(self) -> None:
-        cli = ROOT / "scripts" / "ordia_cli.py"
         proc = subprocess.run(
-            [sys.executable, str(cli), "model", "recommend", "--task", "IMPORT-FDL-FULL-QUALITY-NEXT", "--json"],
-            cwd=ROOT,
+            [*CLI_CMD, "model", "recommend", "--task", "IMPORT-FDL-FULL-QUALITY-NEXT", "--json"],
+            cwd=REPO_ROOT,
             capture_output=True,
             text=True,
         )
@@ -174,17 +169,13 @@ class ModelRoutingTests(unittest.TestCase):
 
 class ModelHookTests(unittest.TestCase):
     def test_detect_model_tier_approval(self) -> None:
-        hooks = ROOT / ".cursor" / "hooks"
+        hooks = REPO_ROOT / ".cursor" / "hooks"
         if not (hooks / "lib" / "control_context.py").is_file():
-            hooks = ROOT / "packages" / "ordia-cursor" / "templates" / "hooks"
+            hooks = REPO_ROOT / "packages" / "ordia-cursor" / "templates" / "hooks"
         if not (hooks / "lib" / "control_context.py").is_file():
-            hooks = CORE / "ordia" / "cursor_bundle" / "hooks"
+            hooks = CORE_ROOT / "ordia" / "cursor_bundle" / "hooks"
         sys.path.insert(0, str(hooks))
         from lib.control_context import detect_model_tier_approval, tier_at_least  # noqa: E402
 
         self.assertEqual(detect_model_tier_approval("APPROVE MODEL T2"), "T2")
         self.assertFalse(tier_at_least("T1", "T2"))
-
-
-if __name__ == "__main__":
-    unittest.main()

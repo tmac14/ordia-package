@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import re
 import subprocess
 from collections import defaultdict
@@ -28,6 +29,8 @@ from ordia.validator.common import (
     parse_yaml_document,
 )
 from ordia.validator.profile import validate_profile_match
+
+logger = logging.getLogger(__name__)
 
 DEFAULT_ORDIA_CURSOR_RULES = [
     ".cursor/rules/ordia-runtime-protocol-header.mdc",

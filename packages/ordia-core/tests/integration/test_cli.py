@@ -8,8 +8,12 @@ import tempfile
 import unittest
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
-CLI = ROOT / "scripts" / "ordia_cli.py"
+import pytest
+
+REPO_ROOT = Path(__file__).resolve().parents[4]
+CLI_CMD = [sys.executable, "-m", "ordia.cli"]
+
+pytestmark = pytest.mark.integration
 
 
 class OrdiaCliTests(unittest.TestCase):
@@ -17,8 +21,8 @@ class OrdiaCliTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             target = Path(tmp)
             init = subprocess.run(
-                [sys.executable, str(CLI), "init", "--directory", str(target), "--profile", "demo"],
-                cwd=ROOT,
+                [*CLI_CMD, "init", "--directory", str(target), "--profile", "demo"],
+                cwd=REPO_ROOT,
                 capture_output=True,
                 text=True,
                 check=False,
@@ -28,8 +32,8 @@ class OrdiaCliTests(unittest.TestCase):
             self.assertTrue((target / "docs" / "control" / "ORCHESTRATION_STATE.md").is_file())
 
             validate = subprocess.run(
-                [sys.executable, str(CLI), "validate", "--directory", str(target)],
-                cwd=ROOT,
+                [*CLI_CMD, "validate", "--directory", str(target)],
+                cwd=REPO_ROOT,
                 capture_output=True,
                 text=True,
                 check=False,
@@ -38,8 +42,8 @@ class OrdiaCliTests(unittest.TestCase):
             self.assertIn("RESULT: PASS", validate.stdout)
 
             doctor = subprocess.run(
-                [sys.executable, str(CLI), "doctor", "--directory", str(target)],
-                cwd=ROOT,
+                [*CLI_CMD, "doctor", "--directory", str(target)],
+                cwd=REPO_ROOT,
                 capture_output=True,
                 text=True,
                 check=False,
@@ -52,8 +56,7 @@ class OrdiaCliTests(unittest.TestCase):
             target = Path(tmp)
             init = subprocess.run(
                 [
-                    sys.executable,
-                    str(CLI),
+                    *CLI_CMD,
                     "init",
                     "--directory",
                     str(target),
@@ -61,7 +64,7 @@ class OrdiaCliTests(unittest.TestCase):
                     "--profile",
                     "demo",
                 ],
-                cwd=ROOT,
+                cwd=REPO_ROOT,
                 capture_output=True,
                 text=True,
                 check=False,
@@ -76,8 +79,8 @@ class OrdiaCliTests(unittest.TestCase):
                 encoding="utf-8",
             )
             doctor = subprocess.run(
-                [sys.executable, str(CLI), "doctor", "--directory", str(target)],
-                cwd=ROOT,
+                [*CLI_CMD, "doctor", "--directory", str(target)],
+                cwd=REPO_ROOT,
                 capture_output=True,
                 text=True,
                 check=False,
@@ -88,24 +91,22 @@ class OrdiaCliTests(unittest.TestCase):
     def test_init_refuses_existing_manifest(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             target = Path(tmp)
-            (target / "ordia.yaml").write_text("version: \"0.2\"\n", encoding="utf-8")
+            (target / "ordia.yaml").write_text('version: "0.2"\n', encoding="utf-8")
             init = subprocess.run(
-                [sys.executable, str(CLI), "init", "--directory", str(target)],
-                cwd=ROOT,
+                [*CLI_CMD, "init", "--directory", str(target)],
+                cwd=REPO_ROOT,
                 capture_output=True,
                 text=True,
                 check=False,
             )
             self.assertEqual(init.returncode, 1)
 
-
     def test_init_monorepo_template(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             target = Path(tmp)
             init = subprocess.run(
                 [
-                    sys.executable,
-                    str(CLI),
+                    *CLI_CMD,
                     "init",
                     "--directory",
                     str(target),
@@ -114,7 +115,7 @@ class OrdiaCliTests(unittest.TestCase):
                     "--profile",
                     "demo",
                 ],
-                cwd=ROOT,
+                cwd=REPO_ROOT,
                 capture_output=True,
                 text=True,
                 check=False,
@@ -125,14 +126,12 @@ class OrdiaCliTests(unittest.TestCase):
             self.assertIn("docs/control", manifest)
             self.assertFalse((target / "minimal").exists(), "monorepo init must not create nested minimal/")
 
-
     def test_init_with_cursor_installs_manifest_loader(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             target = Path(tmp)
             init = subprocess.run(
                 [
-                    sys.executable,
-                    str(CLI),
+                    *CLI_CMD,
                     "init",
                     "--directory",
                     str(target),
@@ -140,7 +139,7 @@ class OrdiaCliTests(unittest.TestCase):
                     "--profile",
                     "demo",
                 ],
-                cwd=ROOT,
+                cwd=REPO_ROOT,
                 capture_output=True,
                 text=True,
                 check=False,
@@ -171,7 +170,3 @@ class OrdiaCliTests(unittest.TestCase):
                 check=False,
             )
             self.assertEqual(probe.returncode, 0, probe.stderr or probe.stdout)
-
-
-if __name__ == "__main__":
-    unittest.main()

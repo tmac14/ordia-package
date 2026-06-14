@@ -3,9 +3,11 @@
 
 from __future__ import annotations
 
-from _ordia_bootstrap import ensure_ordia_core
+import sys
+from pathlib import Path
 
-ensure_ordia_core()
+core = Path(__file__).resolve().parents[1] / "packages" / "ordia-core"
+sys.path.insert(0, str(core))
 
 from ordia.cli import main  # noqa: E402
 

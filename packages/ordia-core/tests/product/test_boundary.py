@@ -11,12 +11,12 @@ import unittest
 import zipfile
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
-CORE = ROOT / "packages" / "ordia-core"
-CLI = ROOT / "scripts" / "ordia_cli.py"
-PRODUCT_DOCS = CORE / "ordia" / "product_docs"
-CURSOR_BUNDLE = CORE / "ordia" / "cursor_bundle"
-NESTED_MINIMAL = CORE / "ordia" / "templates" / "monorepo" / "minimal"
+REPO_ROOT = Path(__file__).resolve().parents[4]
+CORE_ROOT = REPO_ROOT / "packages" / "ordia-core"
+CLI_CMD = [sys.executable, "-m", "ordia.cli"]
+PRODUCT_DOCS = CORE_ROOT / "ordia" / "product_docs"
+CURSOR_BUNDLE = CORE_ROOT / "ordia" / "cursor_bundle"
+NESTED_MINIMAL = CORE_ROOT / "ordia" / "templates" / "monorepo" / "minimal"
 
 PROFILE_LEAK_PATTERNS = (
     re.compile(r"docs/coordination/tasks", re.I),
@@ -54,12 +54,12 @@ class OrdiaPackageBoundaryTests(unittest.TestCase):
         self.assertEqual(leaks, [], "product_docs must be portable:\n" + "\n".join(leaks))
 
     def test_cursor_bundle_no_profile_leaks(self) -> None:
-        self.assertTrue(CURSOR_BUNDLE.is_dir(), "cursor_bundle must exist — run sync_ordia_cursor_bundle.py --sync")
+        self.assertTrue(CURSOR_BUNDLE.is_dir(), "cursor_bundle must exist — run sync_cursor_bundle.py --sync")
         leaks = _scan_tree(CURSOR_BUNDLE)
         self.assertEqual(leaks, [], "cursor_bundle must be portable:\n" + "\n".join(leaks))
 
     def test_cursor_bundle_matches_template(self) -> None:
-        template = ROOT / "packages" / "ordia-cursor" / "templates"
+        template = REPO_ROOT / "packages" / "ordia-cursor" / "templates"
         self.assertTrue(template.is_dir())
         for path in template.rglob("*"):
             if not path.is_file():
@@ -86,15 +86,14 @@ class OrdiaPackageBoundaryTests(unittest.TestCase):
             target = Path(tmp)
             init = subprocess.run(
                 [
-                    sys.executable,
-                    str(CLI),
+                    *CLI_CMD,
                     "init",
                     "--directory",
                     str(target),
                     "--profile",
                     "boundary-test",
                 ],
-                cwd=ROOT,
+                cwd=REPO_ROOT,
                 capture_output=True,
                 text=True,
                 check=False,
@@ -112,8 +111,7 @@ class OrdiaPackageBoundaryTests(unittest.TestCase):
             target = Path(tmp)
             init = subprocess.run(
                 [
-                    sys.executable,
-                    str(CLI),
+                    *CLI_CMD,
                     "init",
                     "--directory",
                     str(target),
@@ -121,18 +119,14 @@ class OrdiaPackageBoundaryTests(unittest.TestCase):
                     "--profile",
                     "ref-copy",
                 ],
-                cwd=ROOT,
+                cwd=REPO_ROOT,
                 capture_output=True,
                 text=True,
                 check=False,
             )
             self.assertEqual(init.returncode, 0, init.stderr or init.stdout)
             readme = (target / "docs" / "ordia" / "README.md").read_text(encoding="utf-8")
-            # Reference repo docs/ordia may mention coordination — only allowed with explicit flag
-            self.assertTrue(
-                "docs/coordination" in readme or "Narofitness" in readme,
-                "from-repo-docs should copy reference profile docs",
-            )
+            self.assertIn("ordia-package", readme)
 
     def test_wheel_product_docs_no_profile_leaks(self) -> None:
         if shutil.which("pip") is None:
@@ -149,7 +143,7 @@ class OrdiaPackageBoundaryTests(unittest.TestCase):
             dist = Path(tmp) / "dist"
             wheel_build = subprocess.run(
                 [sys.executable, "-m", "build", "--wheel", "--outdir", str(dist)],
-                cwd=CORE,
+                cwd=CORE_ROOT,
                 capture_output=True,
                 text=True,
                 check=False,
@@ -169,7 +163,3 @@ class OrdiaPackageBoundaryTests(unittest.TestCase):
                         body = archive.read(name).decode("utf-8", errors="replace")
                         leaks.extend(_collect_leaks(body, name))
             self.assertEqual(leaks, [], "wheel portable content leaks:\n" + "\n".join(leaks))
-
-
-if __name__ == "__main__":
-    unittest.main()

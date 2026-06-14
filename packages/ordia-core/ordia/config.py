@@ -40,7 +40,7 @@ DEFAULT_CONTROL = {
 }
 
 
-def _resolve_control_relative(control_root: Path, repo_root: Path, rel: str) -> Path:
+def resolve_control_relative(control_root: Path, repo_root: Path, rel: str) -> Path:
     """Resolve manifest path relative to control root unless repo-anchored."""
     text = str(rel).replace("\\", "/").strip().lstrip("./")
     if not text:
@@ -49,6 +49,9 @@ def _resolve_control_relative(control_root: Path, repo_root: Path, rel: str) -> 
     if any(text.startswith(prefix) for prefix in repo_anchored_prefixes):
         return repo_root / text
     return control_root / text
+
+
+_resolve_control_relative = resolve_control_relative
 
 
 def _resolve_project_profile(
@@ -162,7 +165,7 @@ class OrdiaConfig:
         )
 
         closure = raw.get("closure") if isinstance(raw.get("closure"), dict) else {}
-        self.closure_validator = str(closure.get("validator", "npm run control:validate"))
+        self.closure_validator = str(closure.get("validator", "npm run ordia:validate"))
 
         commands = raw.get("commands") if isinstance(raw.get("commands"), dict) else {}
         catalog = str(commands.get("catalog", "")).strip()

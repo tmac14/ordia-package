@@ -77,7 +77,7 @@ When `{controlRoot}/ORCHESTRATION_STATE.md` or `{controlRoot}/TASK_REGISTRY.yaml
 
 ## Validation gate
 
-Run `npm run ordia:validate` (greenfield) or `npm run control:validate` (full reference profile) before implementation and after material state transitions. **Do not implement while validation reports errors.**
+Run `ordia validate --project` before implementation and after material state transitions. **Do not implement while validation reports errors.**
 
 ## Recovery verdict (report to user before acting)
 

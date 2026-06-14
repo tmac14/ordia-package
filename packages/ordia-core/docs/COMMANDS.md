@@ -233,7 +233,7 @@ Rules:
 |---|---|---|
 | Catalog sync | `npm run help:validate` | Every control test run |
 | Ordia manifest | `npm run ordia:validate` | Pre/post material state changes |
-| Full project | `npm run control:validate` | Closure + registry |
+| Full project | `ordia validate --project` | Closure + registry |
 | Future | `ordia commands validate` | When manifest declares `commands:` |
 
 Drift between `package.json` and catalog → **fail** control suite (G-CMD01 target).
@@ -263,7 +263,7 @@ Drift between `package.json` and catalog → **fail** control suite (G-CMD01 tar
 
 ```markdown
 Mandatory validation:
-  npm run control:test
+  pytest packages/ordia-core/tests
   npm run ordia:validate -- --project
 ```
 
@@ -296,4 +296,4 @@ Use catalog names so `help:validate` and future `ordia help` stay authoritative.
 - Narofitness catalog instance → [REFERENCE_PROFILE.md](./REFERENCE_PROFILE.md)
 - Test wiring → [TESTING.md](./TESTING.md)
 
-External: repo root [COMMANDS.md](../../../COMMANDS.md), [SPEC v0.5](../../../docs/ordia/SPEC_v0.5.md).
+External: [DAILY_USAGE.md](../../../docs/ordia/DAILY_USAGE.md) and [CLI.md](./CLI.md).

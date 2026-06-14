@@ -5,3 +5,17 @@ dist/
 build/
 .venv/
 .pytest_cache/
+pytest-cache-files-*/
+.coverage
+htmlcov/
+
+# Secrets — never commit
+.pypirc
+*.pypirc
+
+# PyPI recovery codes (any export name / casing)
+pypI-recovery-codes.txt
+PyPI-Recovery-Codes-*.txt
+*pypi*recovery*.txt
+*recovery-codes*.txt
+*Recovery-Codes*.txt

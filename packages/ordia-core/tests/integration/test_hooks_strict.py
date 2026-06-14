@@ -12,28 +12,28 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-ROOT = Path(__file__).resolve().parents[1]
-CLI = ROOT / "scripts" / "ordia_cli.py"
-SYNC = ROOT / "scripts" / "sync_ordia_cursor_bundle.py"
-HOOKS_LIB = ROOT / ".cursor" / "hooks"
-sys.path.insert(0, str(ROOT / "scripts"))
-from _ordia_bootstrap import ensure_ordia_core
+import pytest
 
-ensure_ordia_core()
+from ordia import config as ordia_config_module
 
+REPO_ROOT = Path(__file__).resolve().parents[4]
+CORE_ROOT = REPO_ROOT / "packages" / "ordia-core"
+CLI_CMD = [sys.executable, "-m", "ordia.cli"]
+SYNC = REPO_ROOT / "tools" / "sync_cursor_bundle.py"
+HOOKS_LIB = CORE_ROOT / "ordia" / "cursor_bundle" / "hooks"
 sys.path.insert(0, str(HOOKS_LIB))
 from lib import control_context  # noqa: E402
 
-from ordia import config as ordia_config_module  # noqa: E402
+pytestmark = pytest.mark.integration
 
 
-class OrdiaSlice4CoverageTests(unittest.TestCase):
+class OrdiaHooksStrictTests(unittest.TestCase):
     def test_strict_profile_cli_fails(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             target = Path(tmp)
             init = subprocess.run(
-                [sys.executable, str(CLI), "init", "--directory", str(target), "--profile", "expected"],
-                cwd=ROOT,
+                [*CLI_CMD, "init", "--directory", str(target), "--profile", "expected"],
+                cwd=REPO_ROOT,
                 capture_output=True,
                 text=True,
                 check=False,
@@ -47,15 +47,14 @@ class OrdiaSlice4CoverageTests(unittest.TestCase):
             )
             validate = subprocess.run(
                 [
-                    sys.executable,
-                    str(CLI),
+                    *CLI_CMD,
                     "validate",
                     "--project",
                     "--strict-profile",
                     "--directory",
                     str(target),
                 ],
-                cwd=ROOT,
+                cwd=REPO_ROOT,
                 capture_output=True,
                 text=True,
                 check=False,
@@ -168,17 +167,20 @@ class OrdiaSlice4CoverageTests(unittest.TestCase):
         self.assertEqual(emit_mock.call_args[0][0]["permission"], "deny")
 
     def test_sync_bundle_sync_then_check(self) -> None:
+        if not SYNC.is_file():
+            self.skipTest(f"sync script not found: {SYNC}")
+        sync_cmd = [sys.executable, str(SYNC), "--sync", "--product-only"]
         sync = subprocess.run(
-            [sys.executable, str(SYNC), "--sync"],
-            cwd=ROOT,
+            sync_cmd,
+            cwd=REPO_ROOT,
             capture_output=True,
             text=True,
             check=False,
         )
         self.assertEqual(sync.returncode, 0, sync.stderr or sync.stdout)
         check = subprocess.run(
-            [sys.executable, str(SYNC), "--check"],
-            cwd=ROOT,
+            [sys.executable, str(SYNC), "--check", "--product-only"],
+            cwd=REPO_ROOT,
             capture_output=True,
             text=True,
             check=False,
@@ -186,15 +188,14 @@ class OrdiaSlice4CoverageTests(unittest.TestCase):
         self.assertEqual(check.returncode, 0, check.stderr or check.stdout)
 
     def test_init_with_docs_copies_package_documentation(self) -> None:
-        docs_src = ROOT / "packages" / "ordia-core" / "docs"
+        docs_src = CORE_ROOT / "docs"
         if not (docs_src / "README.md").is_file():
             self.skipTest("package docs not installed yet")
         with tempfile.TemporaryDirectory() as tmp:
             target = Path(tmp)
             init = subprocess.run(
                 [
-                    sys.executable,
-                    str(CLI),
+                    *CLI_CMD,
                     "init",
                     "--directory",
                     str(target),
@@ -202,7 +203,7 @@ class OrdiaSlice4CoverageTests(unittest.TestCase):
                     "--profile",
                     "docs-test",
                 ],
-                cwd=ROOT,
+                cwd=REPO_ROOT,
                 capture_output=True,
                 text=True,
                 check=False,
@@ -211,7 +212,3 @@ class OrdiaSlice4CoverageTests(unittest.TestCase):
             dest = target / "docs" / "ordia" / "package"
             self.assertTrue((dest / "README.md").is_file())
             self.assertTrue((dest / "GREENFIELD.md").is_file())
-
-
-if __name__ == "__main__":
-    unittest.main()

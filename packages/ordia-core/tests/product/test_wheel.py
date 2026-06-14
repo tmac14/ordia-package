@@ -10,25 +10,24 @@ import unittest
 import zipfile
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
-CORE = ROOT / "packages" / "ordia-core"
-CLI = ROOT / "scripts" / "ordia_cli.py"
+import pytest
+
+REPO_ROOT = Path(__file__).resolve().parents[4]
+CORE_ROOT = REPO_ROOT / "packages" / "ordia-core"
+CLI_CMD = [sys.executable, "-m", "ordia.cli"]
+
+pytestmark = pytest.mark.wheel
 
 
 class OrdiaWheelTests(unittest.TestCase):
     def test_package_version_and_resources(self) -> None:
-        sys.path.insert(0, str(CORE))
-        try:
-            import ordia  # noqa: WPS433
+        import ordia  # noqa: WPS433
 
-            self.assertEqual(ordia.__version__, "0.9.0")
-            template = CORE / "ordia" / "templates" / "minimal" / "ordia.yaml"
-            self.assertTrue(template.is_file(), "minimal template must ship in source tree")
-            protocol = CORE / "ordia" / "protocols" / "TASK_EXECUTION.md"
-            self.assertTrue(protocol.is_file(), "protocol templates must ship in source tree")
-        finally:
-            if str(CORE) in sys.path:
-                sys.path.remove(str(CORE))
+        self.assertEqual(ordia.__version__, "0.10.0")
+        template = CORE_ROOT / "ordia" / "templates" / "minimal" / "ordia.yaml"
+        self.assertTrue(template.is_file(), "minimal template must ship in source tree")
+        protocol = CORE_ROOT / "ordia" / "protocols" / "TASK_EXECUTION.md"
+        self.assertTrue(protocol.is_file(), "protocol templates must ship in source tree")
 
     def test_wheel_build_and_greenfield_init(self) -> None:
         if shutil.which("pip") is None:
@@ -47,7 +46,7 @@ class OrdiaWheelTests(unittest.TestCase):
             dist = tmp_path / "dist"
             wheel_build = subprocess.run(
                 [sys.executable, "-m", "build", "--wheel", "--outdir", str(dist)],
-                cwd=CORE,
+                cwd=CORE_ROOT,
                 capture_output=True,
                 text=True,
                 check=False,
@@ -89,7 +88,7 @@ class OrdiaWheelTests(unittest.TestCase):
             target = tmp_path / "greenfield"
             init = subprocess.run(
                 [str(python), "-m", "ordia.cli", "init", "--directory", str(target), "--profile", "wheel-test"],
-                cwd=ROOT,
+                cwd=REPO_ROOT,
                 capture_output=True,
                 text=True,
                 check=False,
@@ -110,7 +109,7 @@ class OrdiaWheelTests(unittest.TestCase):
                     "--profile",
                     "wheel-cursor",
                 ],
-                cwd=ROOT,
+                cwd=REPO_ROOT,
                 capture_output=True,
                 text=True,
                 check=False,
@@ -119,7 +118,3 @@ class OrdiaWheelTests(unittest.TestCase):
             self.assertTrue((target_cursor / ".cursor" / "hooks.json").is_file())
             self.assertTrue((target_cursor / ".cursor" / "hooks" / "validate_runtime_header.py").is_file())
             self.assertTrue(any((target_cursor / ".cursor" / "rules").glob("ordia-*.mdc")))
-
-
-if __name__ == "__main__":
-    unittest.main()

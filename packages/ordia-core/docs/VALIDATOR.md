@@ -202,7 +202,7 @@ session_file = root / ".cursor" / "session-protocol.json"
 
 When ≥1 VALIDATED task exists and `ORDIA_CLOSURE_VALIDATOR_ACTIVE` is **not** set:
 
-1. Read `closure.validator` from manifest (default `npm run control:validate`)
+1. Read `closure.validator` from manifest (default `ordia validate --project`)
 2. Run via `subprocess.run(command, shell=True, cwd=root, timeout=120)`
 3. Set env `ORDIA_CLOSURE_VALIDATOR_ACTIVE=1` in child process
 4. Non-zero exit → warn or error depending on `strict`
@@ -211,7 +211,7 @@ When ≥1 VALIDATED task exists and `ORDIA_CLOSURE_VALIDATOR_ACTIVE` is **not** 
 from ordia.validator.closure import run_closure_validator_command
 
 exit_code, detail = run_closure_validator_command(
-    "npm run control:validate",
+    "ordia validate --project",
     Path("."),
     timeout=120,
 )
@@ -228,7 +228,7 @@ the env var and skips subprocess phase.
 Reference repo does **not** call `validate_project()` directly from npm. Instead:
 
 ```text
-npm run control:validate
+ordia validate --project
   → scripts/validate_project_control.py
       → validate_project(root, config, ProjectValidationOptions(...))
 ```

@@ -6,14 +6,12 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from ordia_config import (
-    OrdiaConfig,
+from ordia.config import (
     is_control_path,
     is_product_path,
     load_ordia_config,
     validate_ordia_manifest,
 )
-
 
 MINIMAL_MANIFEST = """\
 version: "0.3"
@@ -44,6 +42,11 @@ class OrdiaConfigTests(unittest.TestCase):
         (control / "PROFILE.md").write_text("# profile\n", encoding="utf-8")
         (control / "COMMANDS.md").write_text("# commands\n", encoding="utf-8")
         (control / "commands.catalog.json").write_text('{"meta":{},"sections":[]}', encoding="utf-8")
+        (control / "TASK_REGISTRY.yaml").write_text("tasks: []\n", encoding="utf-8")
+        (control / "AGENT_REGISTRY.yaml").write_text("agents: []\n", encoding="utf-8")
+        (control / "DECISION_LOG.md").write_text("# decisions\n", encoding="utf-8")
+        (control / "EVIDENCE_INDEX.md").write_text("# evidence\n", encoding="utf-8")
+        (control / "tasks").mkdir(parents=True)
         (root / "ordia.yaml").write_text(MINIMAL_MANIFEST, encoding="utf-8")
 
     def test_load_manifest_v03(self) -> None:
@@ -121,7 +124,3 @@ class OrdiaConfigTests(unittest.TestCase):
                 config.project_profile_path.resolve(),
                 (control / "PROFILE.md").resolve(),
             )
-
-
-if __name__ == "__main__":
-    unittest.main()

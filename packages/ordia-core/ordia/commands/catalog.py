@@ -6,7 +6,7 @@ import json
 from pathlib import Path
 from typing import Any
 
-from ordia.config import OrdiaConfig, _resolve_control_relative
+from ordia.config import OrdiaConfig, resolve_control_relative
 from ordia.commands.schema import validate_catalog_structure
 
 EXCLUDED_SCRIPTS = frozenset({"help", "help:validate", "help:list"})
@@ -36,7 +36,7 @@ def resolve_catalog_paths(
 
 
 def _resolve_catalog_override(root: Path, config: OrdiaConfig, catalog: str) -> Path:
-    return _resolve_control_relative(config.control_root, root, catalog)
+    return resolve_control_relative(config.control_root, root, catalog)
 
 
 def load_catalog(path: Path) -> dict[str, Any]:
@@ -122,3 +122,39 @@ def validate_catalog_sync(
             errors.append(f'catalog entry "{name}" not found in package.json scripts')
 
     return errors, len(catalog_names)
+
+
+def seed_catalog_from_package(
+    root: Path,
+    catalog_path: Path,
+    package_path: Path,
+    *,
+    profile: str = "default",
+) -> int:
+    """Create or update commands.catalog.json from package.json scripts."""
+    scripts = load_package_scripts(package_path)
+    commands = []
+    for name in sorted(scripts):
+        if name in EXCLUDED_SCRIPTS:
+            continue
+        commands.append(
+            {
+                "name": name,
+                "description": f"npm script `{name}` (seeded from package.json)",
+                "command": f"npm run {name}",
+            }
+        )
+    catalog: dict[str, Any] = {
+        "meta": {"version": 1, "profile": profile},
+        "sections": [
+            {
+                "id": "root",
+                "title": "Root scripts",
+                "commands": commands,
+            }
+        ],
+        "quickFlows": [],
+    }
+    catalog_path.parent.mkdir(parents=True, exist_ok=True)
+    catalog_path.write_text(json.dumps(catalog, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    return len(commands)

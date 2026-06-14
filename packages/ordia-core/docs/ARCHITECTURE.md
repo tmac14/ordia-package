@@ -1,6 +1,6 @@
 # Ordia Core Architecture
 
-**Package:** `ordia-core` 0.8.0  
+**Package:** `ordia-core` 0.10.0  
 **Related:** [MANIFEST.md](./MANIFEST.md) · [HOOKS_AND_RULES.md](./HOOKS_AND_RULES.md) · [PROTOCOLS.md](./PROTOCOLS.md)
 
 ---
@@ -74,7 +74,7 @@ A **profile** is identified by `ordia.yaml` → `profile: <id>`. It adds:
 - Project agent topology (`AGENTS.md`)
 - Domain guardrails (e.g. `narofitness-permanent-guardrails.mdc`)
 - Control store layout exceptions (flat protocols vs `protocols/` subdirectory)
-- Closure command (`npm run control:validate` vs `npm run ordia:validate`)
+- Closure command (`ordia validate --project` vs `npm run ordia:validate`)
 - Command catalog overlay (`COMMANDS.md`)
 
 See [REFERENCE_PROFILE.md](./REFERENCE_PROFILE.md) for the Narofitness mapping.
@@ -227,7 +227,7 @@ Template source is **only** `ordia/templates/` in this package (`ORDIA-D021`).
 
 | Artifact | Contents |
 |---|---|
-| Wheel `ordia_core-0.8.0-*.whl` | Python modules + templates + protocols + workflows + product_docs |
+| Wheel `ordia_core-0.10.0-*.whl` | Python modules + templates + protocols + workflows + product_docs |
 | `share/doc/ordia-core/*.md` | This documentation tree |
 | npm scripts (profile) | Thin wrappers; not shipped in wheel |
 

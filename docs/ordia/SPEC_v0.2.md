@@ -1,6 +1,6 @@
 # Ordia Specification v0.2
 
-> **Historical spec** — manifest schema details in [packages/ordia-core/docs/MANIFEST.md](../../packages/ordia-core/docs/MANIFEST.md). Active baseline: [SPEC_v0.6.md](./SPEC_v0.6.md).
+> **Historical spec** — manifest schema details in [MANIFEST.md](https://github.com/tmac14/ordia-package/blob/main/packages/ordia-core/docs/MANIFEST.md). Active baseline: [SPEC_v0.6.md](./SPEC_v0.6.md).
 
 **Status:** HISTORICAL — project manifest schema  
 **Decision:** `ORDIA-D002`  
@@ -53,7 +53,7 @@ enforcement:                        # required for Cursor hook guard
   unifiedRequiresApproval: true
 
 closure:                            # optional
-  validator: npm run control:validate
+  validator: npm run ordia:validate
 ```
 
 ### 3.1 Path rules
@@ -69,7 +69,7 @@ closure:                            # optional
 Runtime: ONLY_CURSOR
 Protocol: IMPLEMENTATION
 Session: UNIFIED
-Ordia profile: narofitness
+Ordia profile: myapp
 ```
 
 `Ordia profile:` must match `profile` in `ordia.yaml` when both are declared.
@@ -80,8 +80,7 @@ Ordia profile: narofitness
 |---|---|
 | `packages/ordia-core/ordia/config.py` | Load manifest, resolve paths, path classification |
 | `scripts/ordia_config.py` | Thin shim → `ordia.config` (reference repo) |
-| `packages/ordia-core/ordia/validator/` | Generic `--project` validation (v0.5) |
-| `scripts/validate_project_control.py` | Narofitness profile extensions |
+| `packages/ordia-core/ordia/validator/` | Generic `--project` validation |
 | `.cursor/hooks/lib/ordia_manifest.py` | Inline stdlib loader for greenfield hooks |
 | `.cursor/hooks/lib/control_context.py` | Session + manifest-aware edit guard |
 
@@ -90,12 +89,9 @@ uses default paths (v0.1 layout).
 
 ## 5. Reference implementation
 
-Narofitness profile: `ordia.yaml` at repo root with `profile: narofitness` and
-existing `docs/coordination/` paths.
+Greenfield projects use `ordia init` with `profile: myapp` and `docs/control/` paths.
 
 ## 6. Historical note
 
 v0.3 CLI goals are implemented in v0.6 (`ordia init`, `validate`, `doctor`, `help`, `commands validate`).
-See [SPEC_v0.6.md](./SPEC_v0.6.md) and [packages/ordia-core/docs/CLI.md](../../packages/ordia-core/docs/CLI.md).
-
-See [SPEC v0.1 (archived)](../archive/ordia/specs/SPEC_v0.1.md) for product identity and extraction roadmap.
+See [SPEC_v0.6.md](./SPEC_v0.6.md) and [MANIFEST.md](https://github.com/tmac14/ordia-package/blob/main/packages/ordia-core/docs/MANIFEST.md).

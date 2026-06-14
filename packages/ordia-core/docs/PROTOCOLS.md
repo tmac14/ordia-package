@@ -188,7 +188,7 @@ Mismatch between rules table and AGENT_REGISTRY paths → validator error on
 ## Updating templates
 
 1. Edit source under `packages/ordia-core/ordia/protocols/`
-2. Run `npm run control:test` in reference repo
+2. Run `pytest packages/ordia-core/tests` in ordia-package
 3. For reference profile: manually sync flat copies **or** run migration task
 4. For greenfield: consumers re-run init or copy changed files
 

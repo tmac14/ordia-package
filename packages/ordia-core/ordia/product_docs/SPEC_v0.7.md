@@ -2,28 +2,39 @@
 
 **Status:** ACTIVE — model tier routing  
 **Decision:** `ORDIA-D022`  
+**Date:** 2026-06-14  
 **Builds on:** [SPEC_v0.6.md](./SPEC_v0.6.md)
 
 ## Summary
 
-Model tier routing: recommend tier per task, approval gate, Cursor hook warnings, Codex self-report contract.
+v0.7 adds **model tier routing**: recommend tier per task, user approval gate, Cursor hook warnings, Codex self-report contract, and strict validation mode.
 
-## Deliverables (core wheel)
+## Deliverables
 
 | Area | Path |
 |------|------|
-| Core module | `ordia/model_routing/` |
-| Registry (greenfield) | `{controlRoot}/MODEL_REGISTRY.yaml` |
+| Spike | MODEL_ROUTING_SPIKE (repo-only; not in portable wheel subset) |
+| Registry | `docs/coordination/MODEL_REGISTRY.yaml` |
+| Core module | `packages/ordia-core/ordia/model_routing/` |
+| Hooks | `check_model_tier.py`, `log_model_context.py` |
 | CLI | `ordia model recommend`, `ordia model usage-template` |
-| Hooks | `check_model_tier.py`, `log_model_context.py` (via ordia-cursor bundle) |
+| Validator | `validate_model_tier_gate` (profile) |
+| Tests | `scripts/test_ordia_model_routing.py` |
 
 ## Policy
 
 | Topic | Choice |
 |-------|--------|
 | Tiers | T0–T3 |
-| Cursor | Warn-only on tier mismatch |
-| Codex | Prompt contract + self-report |
-| Approval | `APPROVE MODEL T*` |
+| Cursor enforcement | Warn-only (tier mismatch, Auto Mode) |
+| Codex enforcement | Prompt contract + self-report (`ORDIA-D012`) |
+| Task minimum | `model_tier_min` in registry + `track_minimums` in profile |
+| Approval phrase | `APPROVE MODEL T*` |
 
-Profile repos may add strict validation flags and custom registry content — not shipped in core.
+## Non-goals
+
+See MODEL_ROUTING_SPIKE §9.
+
+## Closure
+
+Program slice **CLOSED** — see [SPEC_v0.8.md](./SPEC_v0.8.md).

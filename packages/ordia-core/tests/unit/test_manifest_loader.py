@@ -7,16 +7,16 @@ import tempfile
 import unittest
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
-HOOKS_LIB = ROOT / ".cursor" / "hooks" / "lib"
+REPO_ROOT = Path(__file__).resolve().parents[4]
+CORE_ROOT = REPO_ROOT / "packages" / "ordia-core"
+HOOKS_LIB = CORE_ROOT / "ordia" / "cursor_bundle" / "hooks" / "lib"
 sys.path.insert(0, str(HOOKS_LIB))
 
 from ordia_manifest import (  # noqa: E402
-    load_manifest_config,
     is_control_path,
     is_product_path,
+    load_manifest_config,
 )
-
 
 GREENFIELD_ORDIA = """\
 version: "0.2"
@@ -69,7 +69,3 @@ class OrdiaManifestTests(unittest.TestCase):
             config = load_manifest_config(root)
             assert config is not None
             self.assertEqual(type(config).__name__, "OrdiaManifestConfig")
-
-
-if __name__ == "__main__":
-    unittest.main()

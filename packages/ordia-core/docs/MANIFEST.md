@@ -154,7 +154,7 @@ Drives edit guard behavior via `is_product_path`, `is_control_path`, `is_qa_evid
 
 | Field | Default | Effect |
 |---|---|---|
-| `validator` | `npm run control:validate` (reference) / `npm run ordia:validate` (greenfield) | Shell command run when any task is `VALIDATED` |
+| `validator` | `ordia validate --project` (pip) / `npm run ordia:validate` (npm) | Shell command run when any task is `VALIDATED` |
 
 Semantics (`ORDIA-D014`):
 
@@ -296,7 +296,7 @@ enforcement:
   unifiedRequiresApproval: true
 
 closure:
-  validator: npm run control:validate
+  validator: ordia validate --project
 ```
 
 See [REFERENCE_PROFILE.md](./REFERENCE_PROFILE.md).
@@ -345,7 +345,7 @@ registry/state/closure — see [VALIDATOR.md](./VALIDATOR.md).
 | `version '0.1' is not supported` | Old manifest | Migrate to v0.2 schema |
 | `control.state path missing` | Wrong `control.root` | Fix path or run `ordia init` |
 | `enforcement.controlRoots must not be empty` | Empty list | Add at least one control root |
-| `ordia.yaml could not be loaded` | PyYAML missing | `pip install pyyaml` or `npm run control:install` |
+| `ordia.yaml could not be loaded` | PyYAML missing | `pip install pyyaml` or `pip install ordia-core` |
 | Profile mismatch warning | Header ≠ manifest | Align or use `--strict-profile` in CI |
 | Closure subprocess failed | Validator command broken | Fix `closure.validator` script; run manually |
 
