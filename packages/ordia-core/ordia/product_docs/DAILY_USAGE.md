@@ -2,7 +2,7 @@
 
 **Audience:** control-plane operators and implementers in Ordia-enabled projects  
 **CLI reference:** [packages/ordia-core/docs/CLI.md](https://github.com/tmac14/ordia-package/blob/main/packages/ordia-core/docs/CLI.md)  
-**Version:** v0.15.1 (patch: cursor bundle parallel hook enforcement restored in wheel)
+**Version:** v0.18.0 (navigation, adopt, CI template, reference monorepo)
 
 ---
 
@@ -61,6 +61,7 @@ Paste the full output into the chat. It includes header, recovery checklist, and
 | Initialize scaffold | `ordia init --with-cursor` |
 
 | Docs adoption audit | `ordia docs audit --write-report` |
+| Brownfield adopt (full pipeline) | `ordia adopt --profile <id> --template monorepo` |
 | Brownfield + audit | `ordia init --skip-existing --audit-docs` |
 | Manage path locks | `ordia task lock add --task <ID> --path <PATH>` |
 

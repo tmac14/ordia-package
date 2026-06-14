@@ -38,6 +38,8 @@ RULE_FILES = tuple(
         "ordia-orchestration-mode.mdc",
         "ordia-recovery-bootstrap.mdc",
         "ordia-runtime-protocol-header.mdc",
+        "ordia-parallel-orchestration.mdc",
+        "ordia-brownfield-adoption.mdc",
     )
 )
 

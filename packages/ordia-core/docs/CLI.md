@@ -1,7 +1,7 @@
 # Ordia CLI Reference
 
 **Entry point:** `ordia` (console script → `ordia.cli:main`)  
-**Version:** 0.15.1  
+**Version:** 0.18.0  
 **Related:** [GREENFIELD.md](./GREENFIELD.md) · [VALIDATOR.md](./VALIDATOR.md) · [COMMANDS.md](./COMMANDS.md) · [SPEC_v0.8.md](../../../docs/ordia/SPEC_v0.8.md)
 
 ---

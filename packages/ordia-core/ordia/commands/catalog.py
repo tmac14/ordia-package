@@ -293,6 +293,11 @@ def seed_pip_catalog_stub(
                         "ordia docs audit --write-report",
                     ),
                     _ordia_cli_command(
+                        "ordia:adopt",
+                        "Brownfield adoption pipeline (audit, scaffold, sync, validate)",
+                        "ordia adopt",
+                    ),
+                    _ordia_cli_command(
                         "ordia:prompt-recover",
                         "Emit recovery bootstrap prompt block",
                         "ordia prompt emit --intent recover",

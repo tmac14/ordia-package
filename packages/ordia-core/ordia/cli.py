@@ -376,6 +376,50 @@ def cmd_init(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_adopt(args: argparse.Namespace) -> int:
+    from ordia.adoption.adopt import run_adoption
+    from ordia.output import OrdiaReport, emit_json
+
+    root = Path(args.directory).resolve()
+    outcome = run_adoption(
+        root,
+        profile=args.profile,
+        template=args.template,
+        product_root=args.product_root,
+        with_cursor=not getattr(args, "no_cursor", False),
+        with_docs=not getattr(args, "no_docs", False),
+        sync_commands=not getattr(args, "no_sync_commands", False),
+        write_inventory=not getattr(args, "no_inventory", False),
+        run_validate=not getattr(args, "no_validate", False),
+    )
+    if args.json:
+        emit_json(
+            OrdiaReport(
+                command="adopt",
+                ordia_version=__version__,
+                ok=outcome.ok,
+                issues=list(outcome.errors),
+                warnings=list(outcome.warnings),
+                metadata={
+                    "steps": outcome.steps,
+                    "audit": outcome.audit,
+                    "validate_exit_code": outcome.validate_exit_code,
+                },
+            )
+        )
+        return 0 if outcome.ok else 1
+    for step in outcome.steps:
+        print(f"- {step}")
+    for warning in outcome.warnings:
+        print(f"WARNING: {warning}", file=sys.stderr)
+    for error in outcome.errors:
+        print(f"ERROR: {error}", file=sys.stderr)
+    if outcome.ok:
+        print("Ordia adopt complete — review ADOPTION_REPORT.md and run ordia doctor")
+        return 0 if outcome.validate_exit_code in (None, 0) else 1
+    return 1
+
+
 def cmd_docs_audit(args: argparse.Namespace) -> int:
     from ordia.adoption.audit import format_adoption_report, format_inventory_markdown, run_docs_audit
     from ordia.commands.catalog import resolve_catalog_paths
@@ -450,6 +494,14 @@ def cmd_validate(args: argparse.Namespace) -> int:
     errors: list[str] = []
     warnings: list[str] = []
     validate_ordia_manifest(config, errors, warnings)
+    if isinstance(config.raw, dict):
+        from ordia.validator.common import Validation
+        from ordia.validator.manifest_schema import validate_manifest_schema
+
+        schema_result = Validation()
+        validate_manifest_schema(config.raw, schema_result)
+        errors.extend(schema_result.errors)
+        warnings.extend(schema_result.warnings)
     project_errors: list[str] = []
     project_warnings: list[str] = []
     metadata: dict[str, object] = {
@@ -1070,6 +1122,29 @@ def cmd_doctor(args: argparse.Namespace) -> int:
     except ImportError:
         issues.append(f"dependency: pyyaml missing ({PYYAML_MISSING_HINT})")
 
+    if config is not None:
+        from ordia.adoption.checklist import (
+            adoption_report_stale,
+            inventory_yaml_missing_paths,
+            pending_adoption_steps,
+        )
+
+        control_dir = config.control_root
+        stale = adoption_report_stale(root, control_dir)
+        if stale:
+            hints.append(f"warning: {stale}")
+        pending = pending_adoption_steps(control_dir)
+        if pending:
+            hints.append(
+                "warning: adoption checklist incomplete: " + "; ".join(pending[:4])
+                + (" …" if len(pending) > 4 else "")
+            )
+        inv_yaml = control_dir / "DOCUMENTATION_INVENTORY.yaml"
+        if inv_yaml.is_file():
+            missing = inventory_yaml_missing_paths(root, inv_yaml)
+            for path in missing[:5]:
+                hints.append(f"warning: DOCUMENTATION_INVENTORY.yaml missing path: {path}")
+
     metadata = {
         "hooks_installed": hooks_json.is_file(),
         "rules_installed": rules_dir.is_dir() and any(rules_dir.glob("ordia-*.mdc")),
@@ -1152,6 +1227,27 @@ def build_parser() -> argparse.ArgumentParser:
     docs_audit.add_argument("--write-inventory", action="store_true", help="Write DOCUMENTATION_INVENTORY.md")
     docs_audit.add_argument("--deep", action="store_true", help="Reserved for extended scans (currently same as default)")
     docs_audit.set_defaults(func=cmd_docs_audit)
+
+    adopt_parser = sub.add_parser(
+        "adopt",
+        help="Brownfield adoption: audit, scaffold, cursor sync, validate",
+        parents=[root_parent],
+    )
+    adopt_parser.add_argument("--profile", default="default", help="Project profile id")
+    adopt_parser.add_argument(
+        "--template",
+        choices=("minimal", "monorepo"),
+        default="minimal",
+        help="Scaffold template when files are missing",
+    )
+    adopt_parser.add_argument("--product-root", default="src/", help="Product code root for enforcement")
+    adopt_parser.add_argument("--json", action="store_true", help="Emit JSON report")
+    adopt_parser.add_argument("--no-cursor", action="store_true", help="Skip cursor sync")
+    adopt_parser.add_argument("--no-docs", action="store_true", help="Skip package docs install")
+    adopt_parser.add_argument("--no-sync-commands", action="store_true", help="Skip commands catalog seed")
+    adopt_parser.add_argument("--no-inventory", action="store_true", help="Skip DOCUMENTATION_INVENTORY.md")
+    adopt_parser.add_argument("--no-validate", action="store_true", help="Skip final validate --project")
+    adopt_parser.set_defaults(func=cmd_adopt)
 
     validate_parser = sub.add_parser("validate", help="Validate ordia.yaml and control paths", parents=[root_parent])
     validate_parser.add_argument(

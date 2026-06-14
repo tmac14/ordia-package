@@ -17,7 +17,7 @@ class PipCatalogAndPathsTests(unittest.TestCase):
             root = Path(tmp)
             catalog_path = root / "docs" / "control" / "commands.catalog.json"
             count = seed_pip_catalog_stub(root, catalog_path, profile="test-profile")
-            self.assertEqual(count, 10)
+            self.assertEqual(count, 11)
             data = json.loads(catalog_path.read_text(encoding="utf-8"))
             names = [cmd["name"] for section in data["sections"] for cmd in section["commands"]]
             self.assertIn("ordia:validate", names)

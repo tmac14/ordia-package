@@ -1,0 +1,111 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ordia.dev/schemas/ordia.manifest.schema.json",
+  "title": "Ordia ordia.yaml manifest",
+  "type": "object",
+  "required": ["version", "profile", "control", "enforcement"],
+  "additionalProperties": true,
+  "properties": {
+    "version": {
+      "type": "string",
+      "enum": ["0.2", "0.3"]
+    },
+    "profile": {
+      "type": "string",
+      "minLength": 1
+    },
+    "control": {
+      "type": "object",
+      "required": ["root"],
+      "additionalProperties": true,
+      "properties": {
+        "root": { "type": "string", "minLength": 1 },
+        "state": { "type": "string" },
+        "taskRegistry": { "type": "string" },
+        "agentRegistry": { "type": "string" },
+        "decisionLog": { "type": "string" },
+        "evidenceIndex": { "type": "string" },
+        "taskPackets": { "type": "string" },
+        "projectProfile": { "type": "string" }
+      }
+    },
+    "commands": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "catalog": { "type": "string" },
+        "profileDoc": { "type": "string" },
+        "npmPackage": { "type": "string" },
+        "validateOnControlCheck": { "type": "boolean" }
+      }
+    },
+    "session": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "runtimes": { "type": "array", "items": { "type": "string" } },
+        "protocols": { "type": "array", "items": { "type": "string" } },
+        "modes": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "enforcement": {
+      "type": "object",
+      "required": ["productRoots"],
+      "additionalProperties": true,
+      "properties": {
+        "productRoots": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string" }
+        },
+        "controlRoots": { "type": "array", "items": { "type": "string" } },
+        "qaEvidenceRoots": { "type": "array", "items": { "type": "string" } },
+        "orchestrationBlocksProduct": { "type": "boolean" },
+        "unifiedRequiresApproval": { "type": "boolean" },
+        "strictParallelPaths": { "type": "boolean" }
+      }
+    },
+    "closure": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "validator": { "type": "string" },
+        "strict": { "type": "boolean" }
+      }
+    },
+    "tasks": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "maxInFlightPerOwner": { "type": "integer", "minimum": 1 },
+        "strictInFlightLimits": { "type": "boolean" }
+      }
+    },
+    "models": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "registry": { "type": "string" },
+        "telemetryRoot": { "type": "string" },
+        "defaultTier": { "type": "string" },
+        "requireApprovalAbove": { "type": "string" }
+      }
+    },
+    "profileExtensions": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "cursorRules": { "type": "array", "items": { "type": "string" } },
+        "validateInventory": { "type": "boolean" },
+        "inventoryDoc": { "type": "string" }
+      }
+    },
+    "workflows": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "overlay": { "type": "string" }
+      }
+    }
+  }
+}

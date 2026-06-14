@@ -1,0 +1,15 @@
+{
+  "name": "reference-monorepo-demo",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Ordia 0.18.0 reference monorepo — adoption, parallel tasks, L3 catalog",
+  "scripts": {
+    "dev:web": "echo \"vite --open (stub)\"",
+    "dev:api": "echo \"uvicorn apps.api.main:app --reload (stub)\"",
+    "db:migrate": "echo \"alembic upgrade head (stub)\"",
+    "tunnel:start": "echo \"cloudflared tunnel run (stub)\"",
+    "docker:up": "echo \"docker compose up -d (stub)\"",
+    "quality:lint": "echo \"eslint . (stub)\"",
+    "ordia:validate": "ordia validate --project"
+  }
+}

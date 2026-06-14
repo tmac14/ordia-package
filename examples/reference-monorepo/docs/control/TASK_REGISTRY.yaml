@@ -1,0 +1,53 @@
+schema_version: 1
+updated_at: "2026-06-14"
+authority:
+  purpose: "Ordia task registry — status, dependencies, locks, parallel safety."
+  summary_source: "docs/control/ORCHESTRATION_STATE.md"
+
+queues:
+  in_flight:
+    - TASK-A
+    - TASK-B
+  ready_for_parallel: []
+  planning_pending: []
+  locks_pending: []
+  model_tier_pending: []
+  waiting_for_user_decision: []
+  waiting_for_agent_report: []
+  validation_pending: []
+
+tasks:
+  - id: TASK-A
+    status: IN_FLIGHT
+    owner: agent-backend
+    runtime: ONLY_CURSOR
+    protocol: IMPLEMENTATION
+    task_packet: docs/control/tasks/TASK-A.md
+    planned_write_paths:
+      - apps/api/
+    preferred_intent: implement_feature
+    track: api-hardening
+    gates:
+      model_tier: APPROVED
+  - id: TASK-B
+    status: IN_FLIGHT
+    owner: agent-frontend
+    runtime: ONLY_CURSOR
+    protocol: IMPLEMENTATION
+    task_packet: docs/control/tasks/TASK-B.md
+    planned_write_paths:
+      - apps/web/
+    preferred_intent: implement_ui
+    track: web-shell
+    gates:
+      model_tier: APPROVED
+
+active_locks:
+  - path: apps/api/
+    task_id: TASK-A
+    owner: agent-backend
+  - path: apps/web/
+    task_id: TASK-B
+    owner: agent-frontend
+
+locks: []

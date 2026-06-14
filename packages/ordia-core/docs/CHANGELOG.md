@@ -22,6 +22,52 @@ auditors tracing when behavior changed.
 
 ---
 
+## [0.18.0] — 2026-06-14
+
+**Program:** Ordia v0.18.0 — reference project and end-to-end smoke
+
+### Added
+
+- `examples/reference-monorepo/` — full fictitious monorepo with 2 in-flight tasks, locks, 6 agents, L3 catalog
+- Integration smoke: `test_reference_smoke.py` (validate, foreign-lock deny, docs audit)
+- CI `example-smoke` job runs reference + adopt integration tests
+
+---
+
+## [0.17.0] — 2026-06-14
+
+**Program:** Ordia v0.17.0 — team operations and machine-readable governance
+
+### Added
+
+- `.github/workflows/ordia.yml` in init templates (minimal + monorepo)
+- `docs/control/workflows/intents.overlay.yaml` + `workflows.overlay` in monorepo `ordia.yaml`
+- `DOCUMENTATION_INVENTORY.yaml` and `adoption.checklist.yaml` templates
+- `ordia doctor` warnings: stale `ADOPTION_REPORT.md`, pending adoption checklist, inventory YAML gaps
+- `validate_inventory()` reads paths from `DOCUMENTATION_INVENTORY.yaml`
+- Profile guardrails rule auto-installed as `profile-{slug}-guardrails.mdc` (existing template, now documented)
+- `HOOKS_AND_RULES.md` — parallel lock enforcement and new Cursor rules
+
+### Changed
+
+- Pip catalog stub: 11 L1 commands including `ordia:adopt`
+
+---
+
+## [0.16.0] — 2026-06-14
+
+**Program:** Ordia v0.16.0 — real-project adoption and control-plane navigation
+
+### Added
+
+- `docs/control/NAVIGATION.md` — linked control-plane map in templates
+- Cursor rules: `ordia-parallel-orchestration.mdc`, `ordia-brownfield-adoption.mdc`
+- `ordia adopt` — brownfield pipeline (audit → init --skip-existing → cursor sync → validate)
+- `schemas/ordia.manifest.schema.json` + validation in `validate` and `validate --project`
+- Linked `PROFILE.md`, `AGENTS.md`, `DOCUMENTATION_INVENTORY.md` cross-references
+
+---
+
 ## [0.15.1] — 2026-06-14
 
 **Program:** Ordia v0.15.1 — patch: cursor bundle parallel hooks in wheel

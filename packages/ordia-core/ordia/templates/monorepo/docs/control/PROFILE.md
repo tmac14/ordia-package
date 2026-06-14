@@ -1,10 +1,10 @@
-# Project profile
+# Control plane navigation — see [NAVIGATION.md](./NAVIGATION.md) for the full linked map.
 
 Profile: {{PROFILE}}
 
 ## Agent topology
 
-Six generic parallel roles (see `AGENT_REGISTRY.yaml`):
+Six generic parallel roles (see [AGENT_REGISTRY.yaml](./AGENT_REGISTRY.yaml)):
 
 | Agent | Role | Typical scopes |
 |-------|------|----------------|
@@ -17,7 +17,7 @@ Six generic parallel roles (see `AGENT_REGISTRY.yaml`):
 
 **Mutual exclusion:** `agent-data` and `agent-infra` share group `infra-data` — do not run in-flight on overlapping paths.
 
-Assign `owner` in `TASK_REGISTRY.yaml` to an agent id before `READY_FOR_IMPLEMENTATION`.
+Assign `owner` in [TASK_REGISTRY.yaml](./TASK_REGISTRY.yaml) to an agent id before `READY_FOR_IMPLEMENTATION`.
 
 ## Domain guardrails
 

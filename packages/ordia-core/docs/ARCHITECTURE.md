@@ -1,6 +1,6 @@
 # Ordia Core Architecture
 
-**Package:** `ordia-core` 0.15.1  
+**Package:** `ordia-core` 0.18.0  
 **Related:** [MANIFEST.md](./MANIFEST.md) · [HOOKS_AND_RULES.md](./HOOKS_AND_RULES.md) · [PROTOCOLS.md](./PROTOCOLS.md)
 
 ---

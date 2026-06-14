@@ -1,0 +1,21 @@
+# Greenfield profile — Ordia model tier overlay (ORDIA-D022)
+schema_version: 1
+profile: reference-demo
+updated_at: "2026-06-14"
+
+default_tier: T1
+require_approval_above: T1
+
+cost_bands:
+  T0: minimal
+  T1: low
+  T2: medium
+  T3: high
+
+cursor:
+  T1: { primary: auto }
+  T2: { primary: composer-2.5 }
+
+codex:
+  T1: { primary: gpt-5-mini }
+  T2: { primary: gpt-5-codex }

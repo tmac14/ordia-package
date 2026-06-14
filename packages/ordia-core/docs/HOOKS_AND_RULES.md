@@ -44,7 +44,9 @@ debugging blocked edits or missing headers.
     ├── ordia-orchestration-mode.mdc
     ├── ordia-implementation-mode.mdc
     ├── ordia-coordination-docs.mdc
-    └── <profile>-*.mdc                 # e.g. narofitness-permanent-guardrails
+    ├── ordia-parallel-orchestration.mdc
+    ├── ordia-brownfield-adoption.mdc
+    └── <profile>-*.mdc                 # e.g. profile-reference-demo-guardrails.mdc
 ```
 
 Rules provide **prompt-time guidance**; hooks provide **hard enforcement** (headers, edits) and **warn-only** checks (model tier, workflow intent).
@@ -119,7 +121,7 @@ On exception: **deny** with unexpected error message.
 2. Load session from `session-protocol.json` or seed from state
 3. No session → **deny**
 4. Extract edit path from tool payload
-5. Call `product_edit_blocked(session, path, root)`
+5. Call `product_edit_blocked(session, path, root)` — includes `parallel_edit_blocked` for foreign locks and peer `planned_write_paths` when `enforcement.strictParallelPaths: true`
 6. Blocked → **deny** with reason + control root hint
 
 On exception: **deny**.

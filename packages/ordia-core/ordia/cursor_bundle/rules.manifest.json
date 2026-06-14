@@ -3,5 +3,7 @@
   "rules/ordia-implementation-mode.mdc": "9a4ae5cd9082b016ad16466eedd52ef0807421a985eaadf570fc90922361d070",
   "rules/ordia-orchestration-mode.mdc": "50a42e82fb91030cbabb5f054a64cc827b831531624f63b454410f8f94b41a81",
   "rules/ordia-recovery-bootstrap.mdc": "c7df932d5317041b83481fea5d251b70f518671b707a7a20e458abc71a443203",
-  "rules/ordia-runtime-protocol-header.mdc": "dd23df0a3c5239a31ab5725343cda0b8ab52edfccf609d0f1deacff0497143d0"
+  "rules/ordia-runtime-protocol-header.mdc": "dd23df0a3c5239a31ab5725343cda0b8ab52edfccf609d0f1deacff0497143d0",
+  "rules/ordia-parallel-orchestration.mdc": "38b91aa984bc57549c73afba096dfe497a0906a83f3e245e7babeea930959fcc",
+  "rules/ordia-brownfield-adoption.mdc": "2126764dc5f2cebefa52666b73ef95d7625f4bb95371adf95bf6e67bd4e6397a"
 }

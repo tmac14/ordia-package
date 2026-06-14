@@ -4,6 +4,7 @@ Top-level coordination and adoption docs. Update when adding/removing `.md`/`.ya
 
 ## Coordination docs
 
+- `docs/control/NAVIGATION.md`
 - `docs/control/TASK_REGISTRY.yaml`
 - `docs/control/AGENT_REGISTRY.yaml`
 - `docs/control/ORCHESTRATION_STATE.md`

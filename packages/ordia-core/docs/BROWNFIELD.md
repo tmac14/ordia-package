@@ -1,6 +1,6 @@
 # Brownfield adoption (existing repositories)
 
-**Package:** ordia-core 0.15.1  
+**Package:** ordia-core 0.18.0  
 **Related:** [GREENFIELD.md](./GREENFIELD.md) · [CLI.md](./CLI.md) · [REFERENCE_PROFILE.md](./REFERENCE_PROFILE.md)
 
 ---
@@ -48,10 +48,19 @@ profileExtensions:
 
 Use `ordia/control/paths.py` resolution: greenfield `protocols/` first, legacy `*_PROTOCOL.md` fallback.
 
-### 3. Incremental scaffold
+### 3. One-command adoption (recommended)
 
 ```powershell
-pip install ordia-core==0.15.1
+pip install ordia-core==0.18.0
+ordia adopt --profile your-profile --template monorepo --directory .
+```
+
+Runs: `docs audit` → `init --skip-existing --with-cursor --with-docs` → `cursor sync` → `validate --project`.  
+Review `docs/control/ADOPTION_REPORT.md` and `adoption.checklist.yaml` after completion.
+
+### 4. Incremental scaffold (manual)
+
+```powershell
 ordia init --skip-existing --with-cursor --directory .
 ```
 
@@ -63,7 +72,7 @@ ordia init --skip-existing --with-cursor --directory .
 ordia cursor sync
 ```
 
-### 4. Wire closure (pip-first)
+### 5. Wire closure (pip-first)
 
 Ensure `closure.validator` is `ordia validate --project`. Optional npm wrapper in `package.json`:
 

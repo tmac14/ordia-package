@@ -3,6 +3,7 @@
 Ordia bootstrap — read the project profile under the control store before change-capable work.
 
 - Manifest: `ordia.yaml` — resolve **`{controlRoot}`** from `control.root`
+- **Navigation map:** **`{controlRoot}/NAVIGATION.md`** — linked control-plane index
 - Project profile: **`{controlRoot}/PROFILE.md`** (domain agents, guardrails, tracks)
 - Control store: `docs/control/`
 - Validate: `ordia validate --project` (optional npm wrapper: `npm run ordia:validate`)

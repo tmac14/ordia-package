@@ -1,0 +1,8 @@
+# Profile workflow overlay — extends core intents from ordia-core wheel
+schema_version: 1
+profile: "reference-demo"
+intents:
+  - id: recover
+    body_hint: "Reference-demo: check TASK-A/TASK-B locks before resuming parallel work."
+  - id: orchestrate_parallel
+    body_hint: "Confirm agent-backend and agent-frontend scopes do not overlap."

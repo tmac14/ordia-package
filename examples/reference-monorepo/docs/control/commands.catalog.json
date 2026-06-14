@@ -1,0 +1,135 @@
+{
+  "meta": {
+    "version": 1,
+    "profile": "reference-demo",
+    "generatedBy": "reference-monorepo example (Ordia 0.18.0)"
+  },
+  "sections": [
+    {
+      "id": "ordia-cli",
+      "title": "Ordia CLI (L1)",
+      "notes": [
+        "Primary validation: ordia validate --project",
+        "npm run ordia:validate wraps the closure gate"
+      ],
+      "commands": [
+        {
+          "name": "ordia:validate",
+          "description": "Validate manifest and control-plane registries",
+          "command": "ordia validate --project",
+          "layer": "L1",
+          "domain": "ordia"
+        },
+        {
+          "name": "ordia:doctor",
+          "description": "Check Ordia setup, hooks, and dependencies",
+          "command": "ordia doctor",
+          "layer": "L1",
+          "domain": "ordia"
+        },
+        {
+          "name": "ordia:task-summary",
+          "description": "Summarize in-flight tasks, active state, and locks",
+          "command": "ordia task summary",
+          "layer": "L1",
+          "domain": "ordia"
+        },
+        {
+          "name": "ordia:prompt-recover",
+          "description": "Emit recovery bootstrap prompt block",
+          "command": "ordia prompt emit --intent recover",
+          "layer": "L1",
+          "domain": "ordia"
+        }
+      ]
+    },
+    {
+      "id": "quality",
+      "title": "Quality gates (L2)",
+      "commands": [
+        {
+          "name": "quality:lint",
+          "description": "Run ESLint across the monorepo",
+          "underlyingScript": "eslint .",
+          "layer": "L2",
+          "domain": "quality"
+        }
+      ]
+    },
+    {
+      "id": "dev",
+      "title": "Development (L3)",
+      "commands": [
+        {
+          "name": "dev:web",
+          "description": "Start Vite dev server for apps/web",
+          "layer": "L3",
+          "domain": "dev"
+        },
+        {
+          "name": "dev:api",
+          "description": "Start API reload server for apps/api",
+          "layer": "L3",
+          "domain": "dev"
+        }
+      ]
+    },
+    {
+      "id": "db",
+      "title": "Database (L3)",
+      "commands": [
+        {
+          "name": "db:migrate",
+          "description": "Apply pending database migrations",
+          "layer": "L3",
+          "domain": "db"
+        }
+      ]
+    },
+    {
+      "id": "docker",
+      "title": "Docker (L3)",
+      "commands": [
+        {
+          "name": "docker:up",
+          "description": "Start local Docker Compose stack",
+          "layer": "L3",
+          "domain": "docker"
+        }
+      ]
+    },
+    {
+      "id": "tunnel",
+      "title": "Tunnel (L3)",
+      "commands": [
+        {
+          "name": "tunnel:start",
+          "description": "Start Cloudflare tunnel for local preview",
+          "layer": "L3",
+          "domain": "tunnel"
+        }
+      ]
+    }
+  ],
+  "quickFlows": [
+    {
+      "goal": "Bootstrap recovery",
+      "command": "ordia prompt emit --intent recover"
+    },
+    {
+      "goal": "Validate control plane",
+      "command": "ordia validate --project"
+    },
+    {
+      "goal": "Parallel peer check before TASK-B",
+      "command": "ordia prompt emit --intent orchestrate_parallel --task TASK-B"
+    }
+  ],
+  "workflowIntents": [
+    {
+      "goal": "Spawn parallel implementation",
+      "intent": "orchestrate_parallel",
+      "emitCommand": "ordia prompt emit --intent orchestrate_parallel --task TASK-B"
+    }
+  ]
+}

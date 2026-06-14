@@ -1,0 +1,29 @@
+# Ordia control-plane CI — installed by ordia init / ordia adopt (monorepo template)
+name: ordia
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  ordia-control-plane:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Ordia
+        run: pip install ordia-core
+
+      - name: Doctor
+        run: ordia doctor --strict-integrity
+
+      - name: Validate project
+        run: ordia validate --project
+
+      - name: Task summary
+        run: ordia task summary --json

@@ -529,6 +529,22 @@ def validate_inventory(root: Path, coordination_dir: Path, inventory_path: Path,
         token = match.replace("\\", "/").strip()
         covered_rel.add(token)
         covered_names.add(Path(token).name)
+    yaml_inventory = coordination_dir / "DOCUMENTATION_INVENTORY.yaml"
+    if yaml_inventory.is_file():
+        try:
+            import yaml
+
+            doc = yaml.safe_load(yaml_inventory.read_text(encoding="utf-8"))
+            if isinstance(doc, dict):
+                for key in ("coordination", "protocols"):
+                    entries = doc.get(key, [])
+                    if isinstance(entries, list):
+                        for rel in entries:
+                            token = str(rel).replace("\\", "/").strip()
+                            covered_rel.add(token)
+                            covered_names.add(Path(token).name)
+        except Exception:  # noqa: BLE001
+            result.warn("Could not parse DOCUMENTATION_INVENTORY.yaml for inventory validation")
     files_top = {
         path.name
         for path in coordination_dir.iterdir()
@@ -563,6 +579,13 @@ def validate_project(
     manifest_errors: list[str] = []
     manifest_warnings: list[str] = []
     validate_ordia_manifest(cfg, manifest_errors, manifest_warnings)
+    from ordia.validator.manifest_schema import validate_manifest_schema
+
+    if isinstance(cfg.raw, dict):
+        schema_result = Validation()
+        validate_manifest_schema(cfg.raw, schema_result)
+        manifest_errors.extend(schema_result.errors)
+        manifest_warnings.extend(schema_result.warnings)
     for warning in manifest_warnings:
         result.warn(warning)
     for error in manifest_errors:

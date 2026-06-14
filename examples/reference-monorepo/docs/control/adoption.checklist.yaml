@@ -1,0 +1,35 @@
+# Brownfield adoption checklist — update as steps complete (ordia doctor reads this file)
+schema_version: 1
+profile: "reference-demo"
+updated_at: "2026-06-14"
+stale_report_days: 30
+
+steps:
+  - id: audit
+    title: Run docs audit and review ADOPTION_REPORT.md
+    command: ordia docs audit --write-report --write-inventory
+    status: completed
+    completed_at: "2026-06-10"
+  - id: scaffold
+    title: Scaffold missing Ordia control plane files
+    command: ordia init --skip-existing --with-cursor --with-docs
+    status: completed
+    completed_at: "2026-06-11"
+  - id: cursor_sync
+    title: Install or refresh Cursor hooks and rules
+    command: ordia cursor sync
+    status: completed
+    completed_at: "2026-06-12"
+  - id: commands
+    title: Seed commands catalog from package.json when present
+    command: ordia init --sync-commands --skip-existing
+    status: completed
+    completed_at: "2026-06-13"
+  - id: validate
+    title: Pass project validation gate
+    command: ordia validate --project
+    status: pending
+  - id: doctor
+    title: Doctor reports PASS
+    command: ordia doctor
+    status: pending

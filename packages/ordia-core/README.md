@@ -1,11 +1,11 @@
 # ordia-core
 
-Portable Ordia manifest loader, enforcement helpers, validator, workflows, and CLI (**v0.15.1**).
+Portable Ordia manifest loader, enforcement helpers, validator, workflows, and CLI (**v0.18.0**).
 
 ## Install
 
 ```powershell
-pip install ordia-core==0.15.1
+pip install ordia-core==0.18.0
 ordia init --with-cursor --profile myapp --directory ./my-project
 ```
 

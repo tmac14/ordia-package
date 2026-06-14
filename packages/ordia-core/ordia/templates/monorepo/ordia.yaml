@@ -57,6 +57,9 @@ profileExtensions:
   validateInventory: true
   inventoryDoc: DOCUMENTATION_INVENTORY.md
 
+workflows:
+  overlay: docs/control/workflows/intents.overlay.yaml
+
 models:
   registry: docs/control/MODEL_REGISTRY.yaml
   telemetryRoot: temp/qa/model-usage

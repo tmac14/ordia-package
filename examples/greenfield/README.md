@@ -5,7 +5,7 @@ Minimal walkthrough for bootstrapping a new project with `ordia init`.
 ## Quick start
 
 ```powershell
-pip install ordia-core==0.15.1
+pip install ordia-core==0.18.0
 ordia init --with-cursor --directory .
 ordia doctor --json
 ordia validate --project --json
