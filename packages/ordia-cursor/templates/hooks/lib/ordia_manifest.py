@@ -36,6 +36,7 @@ DEFAULT_ENFORCEMENT = {
     "qaEvidenceRoots": ["temp/qa/"],
     "orchestrationBlocksProduct": True,
     "unifiedRequiresApproval": True,
+    "strictParallelPaths": False,
 }
 
 
@@ -54,6 +55,7 @@ class OrdiaManifestConfig:
         "qa_evidence_roots",
         "orchestration_blocks_product",
         "unified_requires_approval",
+        "strict_parallel_paths",
         "models_registry_path",
         "models_telemetry_root",
         "models_require_approval_above",
@@ -102,6 +104,12 @@ class OrdiaManifestConfig:
             enforcement.get(
                 "unifiedRequiresApproval",
                 DEFAULT_ENFORCEMENT["unifiedRequiresApproval"],
+            )
+        )
+        self.strict_parallel_paths = bool(
+            enforcement.get(
+                "strictParallelPaths",
+                DEFAULT_ENFORCEMENT["strictParallelPaths"],
             )
         )
         models = raw.get("models") if isinstance(raw.get("models"), dict) else {}

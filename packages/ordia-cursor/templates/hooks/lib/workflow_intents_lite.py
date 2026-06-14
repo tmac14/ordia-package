@@ -25,10 +25,35 @@ def _load_yaml(path: Path) -> dict:
     return data if isinstance(data, dict) else {}
 
 
+def _core_intents_path() -> Path | None:
+    monorepo = (
+        Path(__file__).resolve().parents[5]
+        / "packages"
+        / "ordia-core"
+        / "ordia"
+        / "workflows"
+        / "intents.yaml"
+    )
+    if monorepo.is_file():
+        return monorepo
+    wheel = Path(__file__).resolve().parents[3] / "workflows" / "intents.yaml"
+    if wheel.is_file():
+        return wheel
+    try:
+        import ordia
+
+        candidate = Path(ordia.__file__).resolve().parent / "workflows" / "intents.yaml"
+        if candidate.is_file():
+            return candidate
+    except ImportError:
+        pass
+    return None
+
+
 def known_intent_ids(root: Path) -> set[str]:
-    core_dir = root / "packages" / "ordia-core" / "ordia" / "workflows"
     ids: set[str] = set()
-    core = _load_yaml(core_dir / "intents.yaml")
+    core_path = _core_intents_path()
+    core = _load_yaml(core_path) if core_path else {}
     for entry in core.get("intents") or []:
         if isinstance(entry, dict) and entry.get("id"):
             ids.add(str(entry["id"]).lower())

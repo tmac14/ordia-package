@@ -74,6 +74,41 @@ class WorkflowEmitTests(unittest.TestCase):
         self.assertIn("approve_model", block)
         self.assertIn("Model recommendation", block)
 
+    def test_emit_orchestrate_parallel_includes_peer_checklist(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            target = Path(tmp)
+            init = subprocess.run(
+                [*CLI_CMD, "init", "--directory", str(target), "--profile", "parallel-emit"],
+                cwd=REPO_ROOT,
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            self.assertEqual(init.returncode, 0, init.stderr or init.stdout)
+            registry = target / "docs" / "control" / "TASK_REGISTRY.yaml"
+            registry.write_text(
+                """
+schema_version: 1
+updated_at: '2026-06-14'
+queues:
+  in_flight: [TASK-A]
+  ready_for_parallel: [TASK-B]
+tasks:
+  - id: TASK-A
+    owner: agent-backend
+    planned_write_paths: [src/api/]
+active_locks:
+  - path: src/api/
+    task_id: TASK-A
+locks: []
+""".strip(),
+                encoding="utf-8",
+            )
+            block = emit_prompt(target, "orchestrate_parallel", task_id="TASK-B")
+            self.assertIn("Parallel safety checklist", block)
+            self.assertIn("TASK-A", block)
+            self.assertIn("ready_for_parallel", block)
+
 
 class WorkflowOverlayTests(unittest.TestCase):
     def test_narofitness_overlay_intents(self) -> None:

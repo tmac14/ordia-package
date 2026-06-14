@@ -440,7 +440,88 @@ def unified_product_edit_blocked(session: dict[str, Any]) -> bool:
     return not bool(session.get("implementation_approved"))
 
 
+def _normalize_declared_path(path: str) -> str:
+    normalized = path.strip().replace("\\", "/")
+    while normalized.startswith("./"):
+        normalized = normalized[2:]
+    return normalized.rstrip("/") or normalized
+
+
+def _declared_paths_overlap(left: str, right: str) -> bool:
+    a = _normalize_declared_path(left)
+    b = _normalize_declared_path(right)
+    if not a or not b:
+        return False
+    if "*" in a or "*" in b:
+        prefix_a = a.split("*", 1)[0]
+        prefix_b = b.split("*", 1)[0]
+        return prefix_a.startswith(prefix_b) or prefix_b.startswith(prefix_a)
+    if a.endswith("/") or b.endswith("/"):
+        base = a if a.endswith("/") else a + "/"
+        other = b if b.endswith("/") else b + "/"
+        return base.startswith(other) or other.startswith(base)
+    return a == b or a.startswith(b + "/") or b.startswith(a + "/")
+
+
+def _load_parallel_registry(root: Path) -> dict[str, Any]:
+    path = task_registry_path(root)
+    if not path.is_file():
+        return {}
+    try:
+        import yaml
+
+        data = yaml.safe_load(path.read_text(encoding="utf-8"))
+        return data if isinstance(data, dict) else {}
+    except Exception:  # noqa: BLE001
+        return {}
+
+
+def parallel_edit_blocked(session: dict[str, Any], path: str, root: Path) -> tuple[bool, str]:
+    config = get_ordia_config(root)
+    registry = _load_parallel_registry(root)
+    if not registry:
+        return False, ""
+    session_task = str(session.get("task_id") or session.get("active_task_id") or "").strip()
+    normalized_edit = _normalize_declared_path(path)
+    locks = registry.get("active_locks", registry.get("locks", []))
+    if isinstance(locks, list):
+        for lock in locks:
+            if not isinstance(lock, dict):
+                continue
+            lock_path = str(lock.get("path", ""))
+            holder = str(lock.get("task_id", lock.get("holder", "")))
+            if holder and session_task and holder == session_task:
+                continue
+            if lock_path and _declared_paths_overlap(lock_path, normalized_edit):
+                return True, f"Path is locked by task {holder} ({lock_path})."
+    queues = registry.get("queues", {})
+    in_flight = queues.get("in_flight", []) if isinstance(queues, dict) else []
+    if not isinstance(in_flight, list):
+        return False, ""
+    tasks = registry.get("tasks", [])
+    task_by_id: dict[str, dict[str, Any]] = {}
+    if isinstance(tasks, list):
+        for entry in tasks:
+            if isinstance(entry, dict) and entry.get("id"):
+                task_by_id[str(entry["id"])] = entry
+    strict = bool(config and getattr(config, "strict_parallel_paths", False))
+    for task_id in in_flight:
+        tid = str(task_id)
+        if session_task and tid == session_task:
+            continue
+        task = task_by_id.get(tid, {})
+        for declared in task.get("planned_write_paths", []) or []:
+            if _declared_paths_overlap(str(declared), normalized_edit):
+                message = f"Path overlaps planned_write_paths of in-flight task {tid} ({declared})."
+                if strict:
+                    return True, message
+    return False, ""
+
+
 def product_edit_blocked(session: dict[str, Any], path: str, root: Path) -> tuple[bool, str]:
+    blocked, reason = parallel_edit_blocked(session, path, root)
+    if blocked:
+        return True, reason
     if not is_product_code_path(path, root):
         return False, ""
     if is_control_doc_path(path, root) or is_qa_evidence_path(path, root):
@@ -833,7 +914,11 @@ def load_in_flight_entries(root: Path) -> list[dict[str, str]]:
         for task_id in in_flight:
             tid = str(task_id)
             status = str(task_by_id.get(tid, {}).get("status", "UNKNOWN"))
-            rows.append({"id": tid, "status": status})
+            rows.append({
+                "id": tid,
+                "status": status,
+                "owner": str(task_by_id.get(tid, {}).get("owner", "")),
+            })
         return rows
     except Exception:  # noqa: BLE001
         return []
@@ -865,8 +950,21 @@ def recovery_context(root: Path, active_model: str | None = None) -> str:
     in_flight = load_in_flight_entries(root)
     in_flight_note = ""
     if in_flight:
-        summary = ", ".join(f"{row['id']} ({row['status']})" for row in in_flight)
+        summary = ", ".join(
+            f"{row['id']} ({row['status']}, owner={row.get('owner') or '-'})" for row in in_flight
+        )
         in_flight_note = f"\n- queues.in_flight: {summary}"
+    registry = _load_parallel_registry(root)
+    locks = registry.get("active_locks", registry.get("locks", []))
+    lock_note = ""
+    if isinstance(locks, list) and locks:
+        lock_summary = ", ".join(
+            f"{lock.get('path')}→{lock.get('task_id')}"
+            for lock in locks
+            if isinstance(lock, dict) and lock.get("path")
+        )
+        if lock_summary:
+            lock_note = f"\n- active_locks: {lock_summary}"
     state_hint = (
         config.state_path.relative_to(root).as_posix()
         if config is not None
@@ -880,7 +978,7 @@ def recovery_context(root: Path, active_model: str | None = None) -> str:
         f"- active_protocol: {protocol}\n"
         f"- session_mode: {session_mode}\n"
         f"- Active task ID: {task_id}"
-        f"{in_flight_note}"
+        f"{in_flight_note}{lock_note}"
         f"{unified_note}{profile_note}\n"
         "Before change-capable work, declare:\n"
         "Runtime: ONLY_CODEX | CODEX_PLUS_CURSOR | ONLY_CURSOR\n"
