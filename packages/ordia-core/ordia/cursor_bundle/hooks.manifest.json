@@ -4,7 +4,7 @@
   "hooks/check_model_tier.py": "e6bb66070f2ac5811b32ee2d70a704940804ca2fd05b29fb1b4ef9ab5ca22e42",
   "hooks/log_model_context.py": "59a10f5055bb3df4e11d4027cf02c5aa662009a7499bde2a1a900c9c14d9b185",
   "hooks/guard_mode_before_edit.py": "c37c7e7244b0ce82732a769ab9c95774f1f2daca4d6279927b9d81c787a4eea4",
-  "hooks/lib/control_context.py": "ca4acfe3500f28cab209d42806f4e621969c1899f8e065e81dc1100bcfa03358",
+  "hooks/lib/control_context.py": "bd4519af33c4b54805f4378bdf9a181fd6c0e96d45ca70bd5a9effc25f3fef13",
   "hooks/lib/ordia_manifest.py": "4aa943755c6a3f2a24940966d793aff0b2c711ef261d71c6e60ccc2136f9957a",
   "hooks/lib/model_routing_lite.py": "0c88701d1a76a20e57bd35d0f15406d590f0dc59aa75e4b5bd6c62a3ea465df8",
   "hooks/lib/workflow_intents_lite.py": "595e04e56aaf82132eea13451e6ae2ef0430a55dfc1cc3f6a2c72e728a8a8b6b"

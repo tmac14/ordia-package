@@ -14,7 +14,7 @@ class WorkflowIntent:
     id: str
     category: str
     title: str
-    runtime: str
+    runtimes: tuple[str, ...]
     protocol: str
     mode: str | None
     template: str
@@ -23,16 +23,25 @@ class WorkflowIntent:
     end_state: str | None
     body_hint: str | None
 
+    @property
+    def runtime(self) -> str:
+        return self.runtimes[0] if self.runtimes else "ONLY_CURSOR"
+
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> WorkflowIntent:
         commands = data.get("related_commands") or []
         if not isinstance(commands, list):
             commands = []
+        runtimes_raw = data.get("runtimes")
+        if isinstance(runtimes_raw, list) and runtimes_raw:
+            runtimes = tuple(str(item) for item in runtimes_raw if item)
+        else:
+            runtimes = (str(data.get("runtime", "ONLY_CURSOR")),)
         return cls(
             id=str(data.get("id", "")),
             category=str(data.get("category", "work")),
             title=str(data.get("title", data.get("id", ""))),
-            runtime=str(data.get("runtime", "ONLY_CURSOR")),
+            runtimes=runtimes,
             protocol=str(data.get("protocol", "IMPLEMENTATION")),
             mode=str(data["mode"]) if data.get("mode") else None,
             template=str(data.get("template", "generic.md")),
@@ -73,11 +82,16 @@ def describe_intent(root: Path, intent_id: str) -> str:
     intent = load_intent(root, intent_id)
     if intent is None:
         return f"Unknown intent: {intent_id}"
+    runtime_line = (
+        f"Runtimes: {', '.join(intent.runtimes)}"
+        if len(intent.runtimes) > 1
+        else f"Runtime: {intent.runtime}"
+    )
     lines = [
         f"Intent: {intent.id}",
         f"Title: {intent.title}",
         f"Category: {intent.category}",
-        f"Runtime: {intent.runtime}",
+        runtime_line,
         f"Protocol: {intent.protocol}",
     ]
     if intent.mode:

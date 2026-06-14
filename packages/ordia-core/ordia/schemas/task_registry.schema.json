@@ -1,0 +1,111 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ordia.dev/schemas/task_registry.schema.json",
+  "title": "Ordia TASK_REGISTRY",
+  "type": "object",
+  "required": ["schema_version", "updated_at", "queues", "tasks"],
+  "additionalProperties": true,
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "updated_at": {
+      "type": "string",
+      "minLength": 1
+    },
+    "authority": {
+      "type": "object",
+      "additionalProperties": { "type": "string" }
+    },
+    "allowed_statuses": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "queues": {
+      "type": "object",
+      "required": [
+        "in_flight",
+        "ready_for_parallel",
+        "model_tier_pending",
+        "waiting_for_user_decision",
+        "waiting_for_agent_report",
+        "validation_pending"
+      ],
+      "additionalProperties": {
+        "type": "array",
+        "items": { "type": "string", "minLength": 1 }
+      },
+      "properties": {
+        "in_flight": { "type": "array", "items": { "type": "string" } },
+        "ready_for_parallel": { "type": "array", "items": { "type": "string" } },
+        "model_tier_pending": { "type": "array", "items": { "type": "string" } },
+        "waiting_for_user_decision": { "type": "array", "items": { "type": "string" } },
+        "waiting_for_agent_report": { "type": "array", "items": { "type": "string" } },
+        "validation_pending": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "tasks": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/task" }
+    },
+    "locks": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/lock" }
+    },
+    "active_locks": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/lock" }
+    },
+    "agent_pool": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  },
+  "$defs": {
+    "task": {
+      "type": "object",
+      "required": ["id", "status"],
+      "additionalProperties": true,
+      "properties": {
+        "id": { "type": "string", "pattern": "^[A-Z][A-Z0-9-]*$" },
+        "status": { "type": "string", "minLength": 1 },
+        "owner": { "type": "string" },
+        "runtime": {
+          "type": "string",
+          "enum": ["ONLY_CODEX", "CODEX_PLUS_CURSOR", "ONLY_CURSOR"]
+        },
+        "protocol": {
+          "type": "string",
+          "enum": ["ORCHESTRATION", "IMPLEMENTATION", "NONE"]
+        },
+        "task_packet": { "type": "string" },
+        "planned_write_paths": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "dependencies": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "decisions_required": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "next_safe_action": { "type": "string" }
+      }
+    },
+    "lock": {
+      "type": "object",
+      "required": ["path"],
+      "additionalProperties": true,
+      "properties": {
+        "path": { "type": "string", "minLength": 1 },
+        "task_id": { "type": "string" },
+        "holder": { "type": "string" },
+        "reason": { "type": "string" }
+      }
+    }
+  }
+}

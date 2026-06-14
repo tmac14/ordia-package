@@ -195,6 +195,17 @@ def validate_tasks(registry: dict[str, Any], decision_ids: set[str], root: Path,
         if len(task_ids) > 1:
             result.warn(f"Owner {owner} has multiple in-flight tasks: {', '.join(task_ids)}")
 
+    validation_pending = set(queues.get("validation_pending", []) or [])
+    for task_id in queues.get("in_flight", []) or []:
+        task = task_by_id.get(str(task_id))
+        if not task:
+            continue
+        if str(task.get("status")) == "IMPLEMENTED" and str(task_id) not in validation_pending:
+            result.warn(
+                f"{task_id}: IMPLEMENTED in in_flight without validation_pending — "
+                "transition to VALIDATION_PENDING when proof is ready"
+            )
+
     exact_writes: dict[str, str] = {}
     for task in in_flight:
         for path in task.get("planned_write_paths", []):
@@ -264,6 +275,8 @@ def validate_authority_paths(
 
 
 def validate_control_plane_protocols(agent_registry: dict[str, Any], root: Path, result: Validation) -> None:
+    from ordia.control.paths import resolve_registry_protocol_path
+
     runtimes = agent_registry.get("control_plane_runtimes", [])
     if not isinstance(runtimes, list):
         return
@@ -274,8 +287,18 @@ def validate_control_plane_protocols(agent_registry: dict[str, Any], root: Path,
         if not isinstance(protocols, list):
             continue
         for path in protocols:
-            if isinstance(path, str) and not existing_repo_path(root, path):
-                result.error(f"control_plane_runtime {runtime.get('id')}: missing protocol {path}")
+            if not isinstance(path, str):
+                continue
+            if existing_repo_path(root, path):
+                continue
+            resolved = resolve_registry_protocol_path(root, path)
+            if resolved is not None and resolved.is_file():
+                result.warn(
+                    f"control_plane_runtime {runtime.get('id')}: protocol registered as {path} "
+                    f"but found at {resolved.relative_to(root).as_posix()}"
+                )
+                continue
+            result.error(f"control_plane_runtime {runtime.get('id')}: missing protocol {path}")
 
 
 def _state_field(text: str, field: str) -> str | None:
@@ -320,6 +343,25 @@ def validate_runtime_fields(text: str, decision_ids: set[str], result: Validatio
             result.warn("ORCHESTRATION_STATE records a handoff but no RUNTIME-D decision is logged")
 
 
+def validate_registry_state_staleness(
+    registry: dict[str, Any], state_path: Path, result: Validation
+) -> None:
+    registry_stamp = str(registry.get("updated_at") or "").strip()
+    if not registry_stamp or not state_path.is_file():
+        return
+    text = state_path.read_text(encoding="utf-8")
+    match = re.search(r"\*\*Last updated:\*\*\s*(.+)$", text, re.MULTILINE)
+    if not match:
+        result.warn("ORCHESTRATION_STATE missing **Last updated:** — may be stale vs TASK_REGISTRY")
+        return
+    state_stamp = match.group(1).strip()
+    if registry_stamp != state_stamp:
+        result.warn(
+            f"Registry/state staleness: TASK_REGISTRY updated_at ({registry_stamp}) "
+            f"differs from ORCHESTRATION_STATE Last updated ({state_stamp})"
+        )
+
+
 def validate_state(registry: dict[str, Any], state_path: Path, decision_ids: set[str], result: Validation) -> None:
     text = state_path.read_text(encoding="utf-8")
     validate_runtime_fields(text, decision_ids, result)
@@ -336,7 +378,10 @@ def validate_state(registry: dict[str, Any], state_path: Path, decision_ids: set
 
 
 def validate_cursor_workspace(root: Path, options: ProjectValidationOptions, result: Validation) -> None:
-    rules = DEFAULT_ORDIA_CURSOR_RULES + list(options.profile_cursor_rules)
+    rules: list[str] = []
+    if options.require_cursor_workspace:
+        rules.extend(DEFAULT_ORDIA_CURSOR_RULES)
+    rules.extend(options.profile_cursor_rules)
     for relative_path in rules:
         if not (root / relative_path).is_file():
             result.error(f"Missing required Cursor rule: {relative_path}")
@@ -407,8 +452,12 @@ def validate_project(
     agent_registry = load_yaml_file(cfg.agent_registry_path, root, result)
 
     if registry and agent_registry:
+        from ordia.validator.task_registry_schema import validate_task_registry_schema
+
+        validate_task_registry_schema(registry, result)
         decision_ids = markdown_table_ids(cfg.decision_log_path)
         validate_tasks(registry, decision_ids, root, result)
+        validate_registry_state_staleness(registry, cfg.state_path, result)
         validate_agents(registry, agent_registry, result)
         validate_authority_paths(registry, agent_registry, root, result)
         validate_control_plane_protocols(agent_registry, root, result)

@@ -158,3 +158,60 @@ def seed_catalog_from_package(
     catalog_path.parent.mkdir(parents=True, exist_ok=True)
     catalog_path.write_text(json.dumps(catalog, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     return len(commands)
+
+
+def seed_pip_catalog_stub(
+    root: Path,
+    catalog_path: Path,
+    *,
+    profile: str = "default",
+) -> int:
+    """Write pip-first commands.catalog.json when no package.json is present."""
+    catalog: dict[str, Any] = {
+        "meta": {"version": 1, "profile": profile, "generatedBy": "ordia init (pip-first stub)"},
+        "sections": [
+            {
+                "id": "ordia-cli",
+                "title": "Ordia CLI (pip)",
+                "notes": [
+                    "Primary validation: ordia validate --project",
+                    "Optional npm wrappers can be added to package.json and synced with ordia init --sync-commands",
+                ],
+                "commands": [
+                    {
+                        "name": "ordia:doctor",
+                        "description": "Check Ordia setup, hooks, and dependencies",
+                        "command": "ordia doctor",
+                    },
+                    {
+                        "name": "ordia:validate",
+                        "description": "Validate manifest and control-plane registries",
+                        "command": "ordia validate --project",
+                    },
+                    {
+                        "name": "ordia:task-summary",
+                        "description": "Summarize in-flight tasks, active state, and locks",
+                        "command": "ordia task summary",
+                    },
+                    {
+                        "name": "ordia:task-transition",
+                        "description": "Atomically update task status, queues, and ORCHESTRATION_STATE",
+                        "command": "ordia task transition --task <TASK-ID> --status <STATUS>",
+                    },
+                    {
+                        "name": "ordia:prompt-recover",
+                        "description": "Emit recovery bootstrap prompt block",
+                        "command": "ordia prompt emit --intent recover",
+                    },
+                ],
+            }
+        ],
+        "quickFlows": [
+            {"goal": "Bootstrap recovery", "command": "ordia prompt emit --intent recover"},
+            {"goal": "Validate control plane", "command": "ordia validate --project"},
+        ],
+        "workflowIntents": [],
+    }
+    catalog_path.parent.mkdir(parents=True, exist_ok=True)
+    catalog_path.write_text(json.dumps(catalog, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    return len(catalog["sections"][0]["commands"])

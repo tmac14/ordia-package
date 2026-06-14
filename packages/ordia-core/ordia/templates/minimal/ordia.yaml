@@ -46,7 +46,7 @@ enforcement:
   unifiedRequiresApproval: true
 
 closure:
-  validator: npm run ordia:validate
+  validator: ordia validate --project
 
 models:
   registry: docs/control/MODEL_REGISTRY.yaml

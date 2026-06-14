@@ -40,10 +40,10 @@ class WorkflowRegistryTests(unittest.TestCase):
     def test_unknown_intent(self) -> None:
         self.assertIsNone(load_intent(REPO_ROOT, "not-a-real-intent"))
 
-    def test_describe_intent(self) -> None:
-        text = describe_intent(REPO_ROOT, "fix_bug")
-        self.assertIn("fix_bug", text)
-        self.assertIn("Related commands", text)
+    def test_describe_intent_runtimes(self) -> None:
+        text = describe_intent(REPO_ROOT, "recover")
+        self.assertIn("Runtimes:", text)
+        self.assertIn("ONLY_CODEX", text)
 
 
 class WorkflowEmitTests(unittest.TestCase):

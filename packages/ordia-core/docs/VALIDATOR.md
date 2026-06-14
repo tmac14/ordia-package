@@ -100,9 +100,13 @@ Default hook files (when `require_cursor_workspace=True`):
 .cursor/hooks.json
 .cursor/hooks/session_start.py
 .cursor/hooks/validate_runtime_header.py
+.cursor/hooks/check_model_tier.py
 .cursor/hooks/guard_mode_before_edit.py
+.cursor/hooks/log_model_context.py
 .cursor/hooks/lib/control_context.py
 .cursor/hooks/lib/ordia_manifest.py
+.cursor/hooks/lib/model_routing_lite.py
+.cursor/hooks/lib/workflow_intents_lite.py
 ```
 
 ---

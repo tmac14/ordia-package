@@ -1,7 +1,7 @@
 # Greenfield Setup Guide
 
-**Package:** ordia-core 0.10.0  
-**Related:** [CLI.md](./CLI.md) · [HOOKS_AND_RULES.md](./HOOKS_AND_RULES.md) · [TESTING.md](./TESTING.md)
+**Package:** ordia-core 0.12.0  
+**Related:** [CLI.md](./CLI.md) · [BROWNFIELD.md](./BROWNFIELD.md) · [HOOKS_AND_RULES.md](./HOOKS_AND_RULES.md) · [TESTING.md](./TESTING.md)
 
 ---
 
@@ -36,7 +36,7 @@ and engineers verifying wheel packaging after release.
 ### A. PyPI wheel (target state)
 
 ```powershell
-pip install ordia-core==0.10.0
+pip install ordia-core==0.12.0
 ordia --help
 ```
 

@@ -1,7 +1,7 @@
 # Ordia CLI Reference
 
 **Entry point:** `ordia` (console script → `ordia.cli:main`)  
-**Version:** 0.10.0  
+**Version:** 0.12.0  
 **Related:** [GREENFIELD.md](./GREENFIELD.md) · [VALIDATOR.md](./VALIDATOR.md) · [COMMANDS.md](./COMMANDS.md) · [SPEC_v0.8.md](../../../docs/ordia/SPEC_v0.8.md)
 
 ---
@@ -89,15 +89,17 @@ ordia init [options]
 | `--with-docs` | off | Copy package manuals → `docs/ordia/package/` (technical docs) |
 | `--from-repo-docs` | off | **Reference repos only** — copy live `docs/ordia/` instead of bundled portable `product_docs/` |
 | `--force` | off | Overwrite scaffold when `ordia.yaml` already exists |
+| `--skip-existing` | off | Copy only missing files; keep existing `ordia.yaml` and registries |
+| `--sync-commands` | off | Seed `commands.catalog.json` from `package.json` when present |
 
 ### Behavior
 
-1. Renders `ordia.yaml` from template with `{{PROFILE}}`, `{{PRODUCT_ROOT}}`, `{{DATE}}`
+1. Renders `ordia.yaml` from template with `{{PROFILE}}`, `{{PRODUCT_ROOT}}`, `{{DATE}}` (skipped when `--skip-existing` and manifest exists)
 2. Copies template tree (excluding template's raw `ordia.yaml`) into target
-3. Installs six protocol templates → `docs/control/protocols/`
-4. Copies **portable** product docs from bundled `ordia/product_docs/` → `docs/ordia/` (no profile task packets or overlays)
-5. If `--from-repo-docs`: step 4 uses the reference repo's live `docs/ordia/` instead (opt-in)
-6. If `--with-cursor`: substitutes `{PYTHON}` in `hooks.json` with `sys.executable`
+3. Installs seven protocol templates → `docs/control/protocols/`
+4. Copies **portable** product docs from bundled `ordia/product_docs/` → `docs/ordia/`
+5. Seeds pip-first `commands.catalog.json` when no `package.json` (or `--sync-commands` when present)
+6. If `--with-cursor`: substitutes `{PYTHON}` in `hooks.json` with `sys.executable` (skipped when `--skip-existing` and `.cursor/` exists)
 7. If `--with-docs`: mirrors package documentation → `docs/ordia/package/`
 
 ### Examples
@@ -114,6 +116,9 @@ ordia init --with-docs --with-cursor --directory ./acme-platform
 
 # Re-scaffold control store (manifest must use --force)
 ordia init --force --directory .
+
+# Brownfield: add missing files only
+ordia init --skip-existing --with-cursor --directory .
 ```
 
 ### Failure modes
@@ -124,7 +129,29 @@ ordia init --force --directory .
 | `unknown template` | Use `minimal` or `monorepo` only |
 | Cursor bundle missing | Reinstall `ordia-core` wheel; bundle ships in `ordia/cursor_bundle/` |
 
-Post-init hint printed: `Next: npm run ordia:validate`
+Post-init hint printed: `Next: ordia validate`
+
+---
+
+## Command: `cursor sync`
+
+Reinstall `.cursor/hooks.json`, hooks, and ordia rules from the embedded wheel bundle. Does **not** modify `ordia.yaml`, registries, or protocols.
+
+```text
+ordia cursor sync [-C <dir>]
+```
+
+Requires existing `ordia.yaml`.
+
+---
+
+## Command: `task summary`
+
+Summarize in-flight tasks, active orchestration state, locks, and packet next actions.
+
+```text
+ordia task summary [--json] [-C <dir>]
+```
 
 ---
 

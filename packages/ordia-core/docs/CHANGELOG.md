@@ -22,6 +22,53 @@ auditors tracing when behavior changed.
 
 ---
 
+## [0.13.0] — 2026-06-14
+
+**Program:** Ordia v0.13.0 — enterprise robustness (atomic transitions, schema, integrity)
+
+### Added
+
+- `ordia task transition` — atomic TASK_REGISTRY + ORCHESTRATION_STATE updates (`--dry-run`, `--json`)
+- `ordia/schemas/task_registry.schema.json` — formal TASK_REGISTRY structure; validated on `--project`
+- `ordia doctor --strict-integrity` — hook/rule SHA256 drift as errors
+- `cursor_bundle/rules.manifest.json` — optional rules integrity manifest
+- `profile-{{PROFILE_SLUG}}-guardrails.mdc` rendered on `init --with-cursor`
+- Template `profileExtensions.cursorRules` for profile guardrails
+
+### Changed
+
+- Workflow intents: `runtimes: [ONLY_CURSOR, ONLY_CODEX, CODEX_PLUS_CURSOR]` (Codex parity)
+- Validator warns on registry/state `updated_at` staleness and IMPLEMENTED limbo in `in_flight`
+- Orchestration/implementation Cursor rules: `alwaysApply: false` (tiered; hooks enforce protocol)
+
+---
+
+## [0.12.0] — 2026-06-14
+
+**Program:** Ordia v0.12.0 — pip-first adoption, CLI ops, brownfield path
+
+### Added
+
+- `ordia task summary [--json]` — in-flight tasks, state, locks, packet hints
+- `ordia cursor sync` — refresh `.cursor/` without touching registries
+- `ordia init --skip-existing` — brownfield incremental scaffold
+- `ordia/control/paths.py` — greenfield + legacy protocol path resolution
+- `docs/BROWNFIELD.md` and `product_docs/TASK_WALKTHROUGH.md`
+- `tools/scaffold_greenfield_snapshot.py` for `examples/greenfield/snapshot/`
+- Pip-first `commands.catalog.json` seed on init (no `package.json` required)
+- `model_tier_pending` queue in TASK_REGISTRY template
+- `RUNTIME_HANDOFF.md` registered in AGENT_REGISTRY template
+
+### Changed
+
+- Template closure default: `ordia validate --project` (npm optional)
+- Expanded `ORCHESTRATION_STATE.md` template (§1–§3)
+- Recovery rules/hooks: pip shortcuts, `protocols/` primary paths, in-flight queue in sessionStart
+- `PROTOCOLS.md`: seven templates + status↔queue table
+- Example-smoke CI: task summary, cursor sync idempotency, skip-existing init
+
+---
+
 ## [0.11.0] — 2026-06-14
 
 **Program:** Ordia v0.11.0 — coverage 80%, JSON CLI, plugins, CI hardening

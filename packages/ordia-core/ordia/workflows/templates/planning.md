@@ -11,6 +11,6 @@ Required output for this intent:
 - Explicit user approval phrases when gating (APPROVE IMPLEMENTATION, APPROVE MODEL T*)
 - Lock and dependency confirmation when applicable
 
-Do not edit product code until gates in TASK_EXECUTION_PROTOCOL are satisfied.
+Do not edit product code until gates in `{controlRoot}/protocols/TASK_EXECUTION.md` are satisfied.
 
 {{MODEL_BLOCK}}

@@ -56,15 +56,30 @@ def _today() -> str:
     return date.today().isoformat()
 
 
+def _profile_slug(profile: str) -> str:
+    import re
+
+    slug = re.sub(r"[^a-zA-Z0-9-]+", "-", profile.strip()).strip("-").lower()
+    return slug or "default"
+
+
 def _render(text: str, profile: str, product_root: str) -> str:
     return (
         text.replace("{{PROFILE}}", profile)
+        .replace("{{PROFILE_SLUG}}", _profile_slug(profile))
         .replace("{{PRODUCT_ROOT}}", product_root.rstrip("/") + "/")
         .replace("{{DATE}}", _today())
     )
 
 
-def _copy_template_tree(template_dir: Path, target_root: Path, profile: str, product_root: str) -> list[Path]:
+def _copy_template_tree(
+    template_dir: Path,
+    target_root: Path,
+    profile: str,
+    product_root: str,
+    *,
+    skip_existing: bool = False,
+) -> list[Path]:
     written: list[Path] = []
     for path in sorted(template_dir.rglob("*")):
         if path.is_dir():
@@ -73,6 +88,8 @@ def _copy_template_tree(template_dir: Path, target_root: Path, profile: str, pro
         if relative.name == "ordia.yaml":
             continue
         dest = target_root / relative
+        if skip_existing and dest.exists():
+            continue
         dest.parent.mkdir(parents=True, exist_ok=True)
         content = _render(path.read_text(encoding="utf-8"), profile, product_root)
         dest.write_text(content, encoding="utf-8")
@@ -80,7 +97,13 @@ def _copy_template_tree(template_dir: Path, target_root: Path, profile: str, pro
     return written
 
 
-def _install_protocol_templates(target: Path, profile: str, product_root: str) -> list[Path]:
+def _install_protocol_templates(
+    target: Path,
+    profile: str,
+    product_root: str,
+    *,
+    skip_existing: bool = False,
+) -> list[Path]:
     src = protocols_root()
     if not src.is_dir():
         return []
@@ -90,12 +113,14 @@ def _install_protocol_templates(target: Path, profile: str, product_root: str) -
     for path in sorted(src.glob("*.md")):
         content = _render(path.read_text(encoding="utf-8"), profile, product_root)
         out = dest / path.name
+        if skip_existing and out.exists():
+            continue
         out.write_text(content, encoding="utf-8")
         written.append(out)
     return written
 
 
-def _install_cursor_bundle(target: Path) -> None:
+def _install_cursor_bundle(target: Path, *, profile: str | None = None) -> None:
     bundle = _cursor_bundle()
     if not bundle.is_dir():
         raise FileNotFoundError("Ordia Cursor template bundle missing — reinstall ordia-core")
@@ -120,6 +145,12 @@ def _install_cursor_bundle(target: Path) -> None:
         rules_dest.mkdir(parents=True, exist_ok=True)
         for rule in rules_src.glob("*.mdc"):
             shutil.copy2(rule, rules_dest / rule.name)
+    guardrails_template = bundle / "templates" / "profile-guardrails.mdc.template"
+    if guardrails_template.is_file() and profile:
+        slug = _profile_slug(profile)
+        rendered = _render(guardrails_template.read_text(encoding="utf-8"), profile, "src/")
+        out = rules_dest / f"profile-{slug}-guardrails.mdc"
+        out.write_text(rendered, encoding="utf-8")
 
 
 def _package_docs_root() -> Path:
@@ -143,6 +174,7 @@ def _product_docs_root(from_repo_docs: bool = False) -> Path | None:
 PRODUCT_DOC_NAMES = (
     "README.md",
     "DAILY_USAGE.md",
+    "TASK_WALKTHROUGH.md",
     "SPEC_v0.2.md",
     "SPEC_v0.6.md",
     "SPEC_v0.7.md",
@@ -182,6 +214,29 @@ def _install_package_docs(target: Path) -> list[Path]:
     return written
 
 
+def _ensure_profile_extensions(manifest_path: Path, profile: str) -> None:
+    if not manifest_path.is_file():
+        return
+    rule = f".cursor/rules/profile-{_profile_slug(profile)}-guardrails.mdc"
+    text = manifest_path.read_text(encoding="utf-8")
+    if rule in text:
+        return
+    if "profileExtensions:" in text and "cursorRules:" in text:
+        lines = text.splitlines()
+        insert_at = len(lines)
+        for index, line in enumerate(lines):
+            if line.strip().startswith("- ") and "cursorRules" in "\n".join(lines[max(0, index - 3) : index + 1]):
+                insert_at = index + 1
+                while insert_at < len(lines) and lines[insert_at].strip().startswith("- "):
+                    insert_at += 1
+                break
+        lines.insert(insert_at, f"    - {rule}")
+        manifest_path.write_text("\n".join(lines) + ("\n" if text.endswith("\n") else ""), encoding="utf-8")
+        return
+    block = f"\nprofileExtensions:\n  cursorRules:\n    - {rule}\n"
+    manifest_path.write_text(text.rstrip() + block, encoding="utf-8")
+
+
 def cmd_init(args: argparse.Namespace) -> int:
     try:
         import yaml  # noqa: F401
@@ -192,7 +247,8 @@ def cmd_init(args: argparse.Namespace) -> int:
     target = Path(args.directory).resolve()
     target.mkdir(parents=True, exist_ok=True)
     manifest = target / "ordia.yaml"
-    if manifest.exists() and not args.force:
+    skip_existing = bool(getattr(args, "skip_existing", False))
+    if manifest.exists() and not args.force and not skip_existing:
         print(f"ERROR: {manifest} already exists (use --force to overwrite scaffold only)", file=sys.stderr)
         return 1
 
@@ -208,19 +264,42 @@ def cmd_init(args: argparse.Namespace) -> int:
         product_root = "apps/"
 
     ordia_template = template_dir / "ordia.yaml"
-    manifest.write_text(
-        _render(ordia_template.read_text(encoding="utf-8"), profile, product_root),
-        encoding="utf-8",
+    if not manifest.exists() or args.force:
+        manifest.write_text(
+            _render(ordia_template.read_text(encoding="utf-8"), profile, product_root),
+            encoding="utf-8",
+        )
+    written: list[Path] = []
+    if not manifest.exists() or args.force:
+        written.append(manifest)
+    written.extend(
+        _copy_template_tree(
+            template_dir,
+            target,
+            profile,
+            product_root,
+            skip_existing=skip_existing and not args.force,
+        )
     )
-    written = _copy_template_tree(template_dir, target, profile, product_root)
-    protocol_written = _install_protocol_templates(target, profile, product_root)
+    protocol_written = _install_protocol_templates(
+        target,
+        profile,
+        product_root,
+        skip_existing=skip_existing and not args.force,
+    )
     written.extend(protocol_written)
 
     product_written = _install_product_docs(target, from_repo_docs=getattr(args, "from_repo_docs", False))
     written.extend(product_written)
 
     if args.with_cursor:
-        _install_cursor_bundle(target)
+        cursor_dest = target / ".cursor"
+        if not skip_existing or not cursor_dest.exists() or args.force:
+            _install_cursor_bundle(target, profile=profile)
+            _ensure_profile_extensions(manifest, profile)
+            print("- installed .cursor hooks and ordia rules")
+        else:
+            print("- skipped .cursor install (--skip-existing; use `ordia cursor sync` to refresh)")
     if getattr(args, "with_docs", False):
         doc_written = _install_package_docs(target)
         written.extend(doc_written)
@@ -236,16 +315,24 @@ def cmd_init(args: argparse.Namespace) -> int:
             print(f"- synced commands.catalog.json from package.json ({count} commands)")
         else:
             print("WARNING: --sync-commands skipped (no package.json in target)", file=sys.stderr)
+    elif not (target / "package.json").is_file():
+        from ordia.commands.catalog import resolve_catalog_paths, seed_pip_catalog_stub
+
+        cfg = load_ordia_config(target)
+        catalog_path, _ = resolve_catalog_paths(target, cfg)
+        count = seed_pip_catalog_stub(target, catalog_path, profile=profile)
+        print(f"- seeded pip-first commands.catalog.json ({count} commands)")
 
     print(f"Ordia init complete — profile={profile!r} template={template_name!r}")
-    print(f"- wrote {manifest.relative_to(target)}")
+    if not manifest.exists() or args.force or manifest in written:
+        print(f"- wrote {manifest.relative_to(target)}")
     for path in written:
+        if path == manifest:
+            continue
         print(f"- wrote {path.relative_to(target)}")
     if product_written:
         source = "repo docs/ordia/" if getattr(args, "from_repo_docs", False) else "bundled product_docs/"
         print(f"- installed portable product documentation under docs/ordia/ (from {source})")
-    if args.with_cursor:
-        print("- installed .cursor hooks and ordia rules")
     if getattr(args, "with_docs", False):
         print("- installed package documentation under docs/ordia/package/")
     if protocol_written:
@@ -440,22 +527,22 @@ def _verify_hook_commands(root: Path) -> list[str]:
     return issues
 
 
-def _verify_hook_integrity(root: Path) -> list[str]:
-    """Warn when installed hook scripts differ from bundled manifest hashes."""
-    warnings: list[str] = []
+def _verify_hook_integrity(root: Path, *, strict: bool = False) -> list[str]:
+    """Warn or error when installed hook scripts differ from bundled manifest hashes."""
+    messages: list[str] = []
     bundle = cursor_bundle_root()
     if bundle is None:
-        return warnings
+        return messages
     manifest_path = bundle / "hooks.manifest.json"
     if not manifest_path.is_file():
-        return warnings
+        return messages
     try:
         expected = json.loads(manifest_path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError):
-        warnings.append("Could not read bundled hooks.manifest.json for integrity check")
-        return warnings
+        messages.append("Could not read bundled hooks.manifest.json for integrity check")
+        return messages
     if not isinstance(expected, dict):
-        return warnings
+        return messages
     hooks_dir = root / ".cursor"
     for rel, digest in expected.items():
         if not isinstance(rel, str) or not isinstance(digest, str):
@@ -465,10 +552,41 @@ def _verify_hook_integrity(root: Path) -> list[str]:
             continue
         actual = hashlib.sha256(installed.read_bytes()).hexdigest()
         if actual != digest:
-            warnings.append(
+            messages.append(
                 f"Hook integrity: {rel} differs from ordia-core bundle (possible local edit)"
             )
-    return warnings
+    return messages
+
+
+def _verify_rules_integrity(root: Path, *, strict: bool = False) -> list[str]:
+    """Warn or error when installed Ordia rules differ from bundled manifest hashes."""
+    messages: list[str] = []
+    bundle = cursor_bundle_root()
+    if bundle is None:
+        return messages
+    manifest_path = bundle / "rules.manifest.json"
+    if not manifest_path.is_file():
+        return messages
+    try:
+        expected = json.loads(manifest_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        messages.append("Could not read bundled rules.manifest.json for integrity check")
+        return messages
+    if not isinstance(expected, dict):
+        return messages
+    rules_dir = root / ".cursor" / "rules"
+    for rel, digest in expected.items():
+        if not isinstance(rel, str) or not isinstance(digest, str):
+            continue
+        installed = rules_dir / Path(rel).name
+        if not installed.is_file():
+            continue
+        actual = hashlib.sha256(installed.read_bytes()).hexdigest()
+        if actual != digest:
+            messages.append(
+                f"Rule integrity: {rel} differs from ordia-core bundle (possible local edit)"
+            )
+    return messages
 
 
 def _commands_paths(args: argparse.Namespace) -> tuple[Path, Path, Path]:
@@ -675,6 +793,87 @@ def cmd_prompt_header(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_cursor_sync(args: argparse.Namespace) -> int:
+    root = Path(args.directory).resolve()
+    if not (root / "ordia.yaml").is_file():
+        print("ERROR: ordia.yaml missing — run ordia init first", file=sys.stderr)
+        return 1
+    config = load_ordia_config(root)
+    try:
+        _install_cursor_bundle(root, profile=config.profile if config else None)
+        if config is not None:
+            _ensure_profile_extensions(root / "ordia.yaml", config.profile)
+    except FileNotFoundError as exc:
+        print(f"ERROR: {exc}", file=sys.stderr)
+        return 1
+    print("Ordia cursor sync complete")
+    print("- refreshed .cursor/hooks.json, hooks/, and rules/")
+    return 0
+
+
+def cmd_task_summary(args: argparse.Namespace) -> int:
+    from ordia.output import OrdiaReport, emit_json
+    from ordia.tasks.summary import build_task_summary, format_task_summary_text
+
+    root = Path(args.directory).resolve()
+    try:
+        summary = build_task_summary(root)
+    except FileNotFoundError as exc:
+        print(f"ERROR: {exc}", file=sys.stderr)
+        return 1
+    if args.json:
+        emit_json(
+            OrdiaReport(
+                command="task summary",
+                ordia_version=__version__,
+                ok=not summary.get("load_errors"),
+                issues=list(summary.get("load_errors", [])),
+                metadata={"summary": summary},
+            )
+        )
+        return 0 if not summary.get("load_errors") else 1
+    print(format_task_summary_text(summary))
+    return 0 if not summary.get("load_errors") else 1
+
+
+def cmd_task_transition(args: argparse.Namespace) -> int:
+    from ordia.output import OrdiaReport, emit_json
+    from ordia.tasks.transition import TransitionRequest, apply_transition, format_transition_text
+
+    root = Path(args.directory).resolve()
+    request = TransitionRequest(
+        task_id=args.task,
+        status=args.status,
+        set_active=bool(getattr(args, "set_active", False)),
+        clear_active=bool(getattr(args, "clear_active", False)),
+        next_safe_action=getattr(args, "next_safe_action", None),
+        waiting_for=getattr(args, "waiting_for", None),
+    )
+    result = apply_transition(root, request, dry_run=bool(getattr(args, "dry_run", False)))
+    if args.json:
+        emit_json(
+            OrdiaReport(
+                command="task transition",
+                ordia_version=__version__,
+                ok=result.ok,
+                issues=list(result.errors),
+                warnings=list(result.warnings),
+                metadata={
+                    "task_id": result.task_id,
+                    "previous_status": result.previous_status,
+                    "new_status": result.new_status,
+                    "removed_queues": result.removed_queues,
+                    "target_queue": result.target_queue,
+                    "registry_updated_at": result.registry_updated_at,
+                    "dry_run": result.dry_run,
+                },
+            )
+        )
+        return 0 if result.ok else 1
+    print(format_transition_text(result))
+    return 0 if result.ok else 1
+
+
 def cmd_doctor(args: argparse.Namespace) -> int:
     root = Path(args.directory).resolve()
     issues: list[str] = []
@@ -700,11 +899,20 @@ def cmd_doctor(args: argparse.Namespace) -> int:
     hooks_json = root / ".cursor" / "hooks.json"
     rules_dir = root / ".cursor" / "rules"
     manifest_loader = root / ".cursor" / "hooks" / "lib" / "ordia_manifest.py"
+    strict_integrity = bool(getattr(args, "strict_integrity", False))
     if hooks_json.is_file():
         hints.append("Cursor hooks: installed")
         issues.extend(_verify_hook_commands(root))
-        for warning in _verify_hook_integrity(root):
-            hints.append(f"warning: {warning}")
+        for message in _verify_hook_integrity(root, strict=strict_integrity):
+            if strict_integrity:
+                issues.append(message)
+            else:
+                hints.append(f"warning: {message}")
+        for message in _verify_rules_integrity(root, strict=strict_integrity):
+            if strict_integrity:
+                issues.append(message)
+            else:
+                hints.append(f"warning: {message}")
     else:
         hints.append("Cursor hooks: not installed (optional: ordia init --with-cursor)")
     if manifest_loader.is_file():
@@ -795,6 +1003,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="Best-effort: seed commands.catalog.json from package.json scripts when present",
     )
     init_parser.add_argument("--force", action="store_true", help="Allow init when ordia.yaml exists")
+    init_parser.add_argument(
+        "--skip-existing",
+        action="store_true",
+        help="Copy only missing scaffold files; keep existing ordia.yaml and registries",
+    )
     init_parser.set_defaults(func=cmd_init)
 
     validate_parser = sub.add_parser("validate", help="Validate ordia.yaml and control paths", parents=[root_parent])
@@ -896,7 +1109,37 @@ def build_parser() -> argparse.ArgumentParser:
 
     doctor_parser = sub.add_parser("doctor", help="Check Ordia setup and dependencies", parents=[root_parent])
     doctor_parser.add_argument("--json", action="store_true", help="Emit JSON report")
+    doctor_parser.add_argument(
+        "--strict-integrity",
+        action="store_true",
+        help="Treat hook/rule SHA256 drift as errors (default: warn)",
+    )
     doctor_parser.set_defaults(func=cmd_doctor)
+
+    cursor_parser = sub.add_parser("cursor", help="Cursor bundle utilities", parents=[root_parent])
+    cursor_sub = cursor_parser.add_subparsers(dest="cursor_cmd", required=True)
+    cursor_sync = cursor_sub.add_parser("sync", help="Reinstall .cursor hooks and rules from ordia-core", parents=[root_parent])
+    cursor_sync.set_defaults(func=cmd_cursor_sync)
+
+    task_parser = sub.add_parser("task", help="Task registry utilities", parents=[root_parent])
+    task_sub = task_parser.add_subparsers(dest="task_cmd", required=True)
+    task_summary = task_sub.add_parser("summary", help="Summarize in-flight tasks and active state", parents=[root_parent])
+    task_summary.add_argument("--json", action="store_true", help="Emit JSON report")
+    task_summary.set_defaults(func=cmd_task_summary)
+    task_transition = task_sub.add_parser(
+        "transition",
+        help="Atomically update task status, queues, and ORCHESTRATION_STATE",
+        parents=[root_parent],
+    )
+    task_transition.add_argument("--task", required=True, help="Task ID")
+    task_transition.add_argument("--status", required=True, help="New task status")
+    task_transition.add_argument("--set-active", action="store_true", help="Set Active task ID in state")
+    task_transition.add_argument("--clear-active", action="store_true", help="Set Active task ID to NONE")
+    task_transition.add_argument("--next-safe-action", help="Update next safe action in state and registry")
+    task_transition.add_argument("--waiting-for", help="Update Waiting for in ORCHESTRATION_STATE")
+    task_transition.add_argument("--dry-run", action="store_true", help="Plan transition without writing files")
+    task_transition.add_argument("--json", action="store_true", help="Emit JSON report")
+    task_transition.set_defaults(func=cmd_task_transition)
 
     help_parser = sub.add_parser("help", help="Command catalog overview, list, or detail", parents=[root_parent])
     help_parser.add_argument(

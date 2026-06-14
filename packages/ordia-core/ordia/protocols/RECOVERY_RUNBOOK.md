@@ -9,8 +9,9 @@ Cold-start recovery when chat context is lost.
 3. `{controlRoot}/ORCHESTRATION_STATE.md` §0
 4. `{controlRoot}/TASK_REGISTRY.yaml`
 5. `{controlRoot}/AGENT_REGISTRY.yaml`
-6. Selected runtime protocol from `{controlRoot}/protocols/`
-7. Active task packet when Active task ID is not `NONE`
+6. Selected runtime protocol from `{controlRoot}/protocols/` (or legacy `*_PROTOCOL.md`)
+7. When `handoff_from` is not `NONE`: `{controlRoot}/protocols/RUNTIME_HANDOFF.md` (or legacy `RUNTIME_HANDOFF_PROTOCOL.md`) **before** the active task packet
+8. Active task packet when Active task ID is not `NONE`
 
 ## Recovery verdict
 
@@ -23,7 +24,7 @@ Report exactly one before change-capable work:
 ## Validation
 
 ```text
-npm run ordia:validate -- --project
+ordia validate --project
 ```
 
 Do not implement while validation reports errors.

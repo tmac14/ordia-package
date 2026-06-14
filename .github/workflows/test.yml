@@ -178,6 +178,37 @@ jobs:
 
               assert "intent: recover" in prompt.stdout
 
+              summary = subprocess.run([*cli, "task", "summary", "--json", "--directory", str(target)], capture_output=True, text=True, check=True, cwd=repo)
+
+              sm = json.loads(summary.stdout)
+
+              assert sm["ok"], summary.stdout
+
+              subprocess.run([*cli, "cursor", "sync", "--directory", str(target)], check=True, cwd=repo)
+
+              subprocess.run([*cli, "cursor", "sync", "--directory", str(target)], check=True, cwd=repo)
+
+              subprocess.run([*cli, "init", "--skip-existing", "--directory", str(target)], check=True, cwd=repo)
+
+              reg = target / "docs" / "control" / "TASK_REGISTRY.yaml"
+
+              reg.write_text(reg.read_text(encoding="utf-8").replace("tasks: []", """tasks:
+  - id: EX-001
+    status: IN_FLIGHT
+    owner: orchestrator
+    runtime: ONLY_CURSOR
+    protocol: IMPLEMENTATION
+    task_packet: src/**""").replace("in_flight: []", "in_flight: [EX-001]"), encoding="utf-8")
+
+              transition = subprocess.run(
+                  [*cli, "task", "transition", "--task", "EX-001", "--status", "IMPLEMENTED", "--json", "--directory", str(target)],
+                  capture_output=True, text=True, check=True, cwd=repo,
+              )
+
+              tr = json.loads(transition.stdout)
+
+              assert tr["ok"], transition.stdout
+
           print("example-smoke: PASS")
 
           PY

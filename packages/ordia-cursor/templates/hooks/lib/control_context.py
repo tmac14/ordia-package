@@ -787,7 +787,7 @@ def model_selection_reminder(root: Path, active_model: str | None = None) -> str
             [
                 "",
                 f"Model tier not approved for task {task_id}:",
-                f"- Run: npm run ordia -- model recommend --task {task_id}",
+                f"- Run: ordia model recommend --task {task_id}",
                 "- Then reply: APPROVE MODEL T* before implementation.",
                 "- Then select the recommended model manually in Cursor/Codex.",
             ]
@@ -797,7 +797,7 @@ def model_selection_reminder(root: Path, active_model: str | None = None) -> str
             [
                 "",
                 "Model tier: not approved this session.",
-                "- Run `npm run ordia -- model recommend --task <ID>`, reply APPROVE MODEL T*,",
+                "- Run `ordia model recommend --task <ID>`, reply APPROVE MODEL T*,",
                 "  then select the recommended model manually in the IDE before change-capable work.",
             ]
         )
@@ -805,7 +805,42 @@ def model_selection_reminder(root: Path, active_model: str | None = None) -> str
     return "\n".join(lines) if lines else ""
 
 
+def load_in_flight_entries(root: Path) -> list[dict[str, str]]:
+    """Return in-flight task id/status pairs from TASK_REGISTRY.yaml when parseable."""
+    root = root.resolve()
+    path = task_registry_path(root)
+    if not path.is_file():
+        return []
+    try:
+        import yaml
+
+        data = yaml.safe_load(path.read_text(encoding="utf-8"))
+        if not isinstance(data, dict):
+            return []
+        queues = data.get("queues", {})
+        if not isinstance(queues, dict):
+            return []
+        in_flight = queues.get("in_flight", [])
+        if not isinstance(in_flight, list):
+            return []
+        tasks = data.get("tasks", [])
+        task_by_id: dict[str, dict[str, Any]] = {}
+        if isinstance(tasks, list):
+            for entry in tasks:
+                if isinstance(entry, dict) and entry.get("id"):
+                    task_by_id[str(entry["id"])] = entry
+        rows: list[dict[str, str]] = []
+        for task_id in in_flight:
+            tid = str(task_id)
+            status = str(task_by_id.get(tid, {}).get("status", "UNKNOWN"))
+            rows.append({"id": tid, "status": status})
+        return rows
+    except Exception:  # noqa: BLE001
+        return []
+
+
 def recovery_context(root: Path, active_model: str | None = None) -> str:
+    root = root.resolve()
     fields = read_state_fields(root)
     config = get_ordia_config(root)
     runtime = fields.get("runtime") or NONE_SELECTED
@@ -827,6 +862,11 @@ def recovery_context(root: Path, active_model: str | None = None) -> str:
         profile_note = (
             f"\n- WARNING: Ordia profile header {declared!r} does not match ordia.yaml profile {profile}."
         )
+    in_flight = load_in_flight_entries(root)
+    in_flight_note = ""
+    if in_flight:
+        summary = ", ".join(f"{row['id']} ({row['status']})" for row in in_flight)
+        in_flight_note = f"\n- queues.in_flight: {summary}"
     state_hint = (
         config.state_path.relative_to(root).as_posix()
         if config is not None
@@ -840,6 +880,7 @@ def recovery_context(root: Path, active_model: str | None = None) -> str:
         f"- active_protocol: {protocol}\n"
         f"- session_mode: {session_mode}\n"
         f"- Active task ID: {task_id}"
+        f"{in_flight_note}"
         f"{unified_note}{profile_note}\n"
         "Before change-capable work, declare:\n"
         "Runtime: ONLY_CODEX | CODEX_PLUS_CURSOR | ONLY_CURSOR\n"

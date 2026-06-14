@@ -1,6 +1,6 @@
 [project]
 name = "ordia-core"
-version = "0.11.0"
+version = "0.13.0"
 description = "Ordia durable agent orchestration and implementation control"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -47,6 +47,12 @@ markers = [
   "product: repo-level product audits",
 ]
 
+[tool.coverage.run]
+omit = [
+  "ordia/cursor_bundle/hooks/*",
+  "ordia/cursor_bundle/hooks/lib/*",
+]
+
 [tool.ruff]
 line-length = 100
 target-version = "py311"
@@ -68,7 +74,7 @@ where = ["."]
 include = ["ordia*"]
 
 [tool.setuptools.package-data]
-ordia = ["templates/**/*", "protocols/*.md", "commands/*.json", "workflows/**/*", "product_docs/*.md", "cursor_bundle/**/*", "cursor_bundle/hooks.manifest.json"]
+ordia = ["templates/**/*", "protocols/*.md", "commands/*.json", "workflows/**/*", "product_docs/*.md", "schemas/*.json", "cursor_bundle/**/*", "cursor_bundle/hooks.manifest.json", "cursor_bundle/rules.manifest.json"]
 
 [tool.setuptools.data-files]
 "share/doc/ordia-core" = ["docs/*.md"]

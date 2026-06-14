@@ -1,6 +1,6 @@
 # Ordia Core Package Documentation
 
-**Package:** `ordia-core` **0.10.0**  
+**Package:** `ordia-core` **0.12.0**  
 **Program:** Ordia v0.8 — documentation + workflow intents closeout  
 **Authority:** [SPEC v0.8](../../../docs/ordia/SPEC_v0.8.md) · [IMPROVEMENT_PLAN v0.8](../../../docs/ordia/archive/IMPROVEMENT_PLAN_v0.8.md)
 
@@ -18,7 +18,7 @@ Ordia works **in any repository**, not only the Narofitness reference profile.
 | Reader | Start here |
 |---|---|
 | New user / daily operator | [docs/ordia/DAILY_USAGE.md](../../../docs/ordia/DAILY_USAGE.md) → [docs/ordia/README.md](../../../docs/ordia/README.md) |
-| New contributor adopting Ordia | [GREENFIELD.md](./GREENFIELD.md) → [CLI.md](./CLI.md) |
+| New contributor adopting Ordia | [GREENFIELD.md](./GREENFIELD.md) → [BROWNFIELD.md](./BROWNFIELD.md) → [CLI.md](./CLI.md) |
 | Control-plane / orchestration author | [ARCHITECTURE.md](./ARCHITECTURE.md) → [PROTOCOLS.md](./PROTOCOLS.md) |
 | Cursor hook maintainer | [HOOKS_AND_RULES.md](./HOOKS_AND_RULES.md) → [MANIFEST.md](./MANIFEST.md) |
 | Validator / CI engineer | [VALIDATOR.md](./VALIDATOR.md) → [TESTING.md](./TESTING.md) |

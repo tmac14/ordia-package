@@ -30,6 +30,17 @@ HOOK_FILES = (
 
 RULE_GLOB = "ordia-*.mdc"
 
+RULE_FILES = tuple(
+    f"rules/{name}"
+    for name in (
+        "ordia-coordination-docs.mdc",
+        "ordia-implementation-mode.mdc",
+        "ordia-orchestration-mode.mdc",
+        "ordia-recovery-bootstrap.mdc",
+        "ordia-runtime-protocol-header.mdc",
+    )
+)
+
 
 def _sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
@@ -92,6 +103,16 @@ def write_hooks_manifest() -> None:
     manifest_path.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
 
 
+def write_rules_manifest() -> None:
+    manifest: dict[str, str] = {}
+    for relative in RULE_FILES:
+        path = WHEEL_BUNDLE / relative
+        if path.is_file():
+            manifest[relative] = _sha256(path)
+    manifest_path = WHEEL_BUNDLE / "rules.manifest.json"
+    manifest_path.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
+
+
 def cmd_check(*, product_only: bool = False) -> int:
     errors: list[str] = []
     if not product_only:
@@ -143,6 +164,7 @@ def cmd_sync(*, product_only: bool = False) -> int:
     if product_only:
         _mirror_template_to_wheel()
         write_hooks_manifest()
+        write_rules_manifest()
         print("Ordia Cursor bundle synced: template -> ordia/cursor_bundle/")
         return cmd_check(product_only=True)
     TEMPLATE.mkdir(parents=True, exist_ok=True)
@@ -163,6 +185,7 @@ def cmd_sync(*, product_only: bool = False) -> int:
         template_hooks.write_text(text, encoding="utf-8")
     _mirror_template_to_wheel()
     write_hooks_manifest()
+    write_rules_manifest()
     print("Ordia Cursor bundle synced to packages/ordia-cursor/templates/ and ordia/cursor_bundle/")
     return cmd_check(product_only=product_only)
 

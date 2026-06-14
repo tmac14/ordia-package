@@ -8,7 +8,7 @@
 
 ## Purpose
 
-Document the **six portable protocol templates**, the Runtime × Protocol routing
+Document the **seven portable protocol templates**, the Runtime × Protocol routing
 matrix, how `ordia init` installs them, and the Narofitness flat-protocol
 profile exception.
 
@@ -29,6 +29,20 @@ migrating legacy flat protocol files to the `protocols/` subdirectory layout.
 | `CODEX_ORCHESTRATION.md` | Codex control plane |
 | `CODEX_IMPLEMENTATION.md` | Codex self-implementation |
 | `RECOVERY_RUNBOOK.md` | Context-loss recovery bootstrap |
+| `RUNTIME_HANDOFF.md` | Multi-runtime handoff (PAUSE → SNAPSHOT → VALIDATE → RECONCILE → RESUME) |
+
+### Task status ↔ queue mapping
+
+| Queue | Allowed statuses |
+|-------|------------------|
+| `in_flight` | `IN_FLIGHT`, `IMPLEMENTED` |
+| `ready_for_parallel` | `READY_FOR_IMPLEMENTATION` |
+| `model_tier_pending` | `MODEL_TIER_APPROVED` |
+| `waiting_for_user_decision` | `WAITING_FOR_USER_DECISION`, `PAUSED` |
+| `waiting_for_agent_report` | `WAITING_FOR_AGENT_REPORT` |
+| `validation_pending` | `VALIDATION_PENDING` |
+
+Source: `ordia/validator/common.py` (`QUEUE_STATUS`).
 
 All templates use placeholders rendered at init:
 

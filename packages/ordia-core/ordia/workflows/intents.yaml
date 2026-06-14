@@ -5,7 +5,7 @@ intents:
   - id: recover
     category: control
     title: Recover session after context loss
-    runtime: ONLY_CURSOR
+    runtimes: [ONLY_CURSOR, ONLY_CODEX, CODEX_PLUS_CURSOR]
     protocol: ORCHESTRATION
     mode: null
     template: control.md
@@ -17,19 +17,19 @@ intents:
   - id: handoff
     category: control
     title: Runtime handoff between control planes
-    runtime: ONLY_CURSOR
+    runtimes: [ONLY_CURSOR, ONLY_CODEX, CODEX_PLUS_CURSOR]
     protocol: ORCHESTRATION
     mode: null
     template: control.md
     requires_task: false
     related_commands: []
     end_state: HANDOFF_CONFIRMED
-    body_hint: Follow RUNTIME_HANDOFF_PROTOCOL — snapshot, validate, reconcile, resume.
+    body_hint: Follow {controlRoot}/protocols/RUNTIME_HANDOFF.md — snapshot, validate, reconcile, resume.
 
   - id: orchestrate_batch
     category: control
     title: Generate next executor prompt batch
-    runtime: ONLY_CURSOR
+    runtimes: [ONLY_CURSOR, ONLY_CODEX, CODEX_PLUS_CURSOR]
     protocol: ORCHESTRATION
     mode: null
     template: control.md
@@ -41,7 +41,7 @@ intents:
   - id: evaluate_plan
     category: control
     title: Evaluate agent plan submission
-    runtime: ONLY_CURSOR
+    runtimes: [ONLY_CURSOR, ONLY_CODEX, CODEX_PLUS_CURSOR]
     protocol: ORCHESTRATION
     mode: null
     template: control.md
@@ -53,7 +53,7 @@ intents:
   - id: evaluate_report
     category: control
     title: Evaluate executor implementation report
-    runtime: ONLY_CURSOR
+    runtimes: [ONLY_CURSOR, ONLY_CODEX, CODEX_PLUS_CURSOR]
     protocol: ORCHESTRATION
     mode: null
     template: control.md
@@ -65,7 +65,7 @@ intents:
   - id: task_create
     category: control
     title: Create new task packet and registry entry
-    runtime: ONLY_CURSOR
+    runtimes: [ONLY_CURSOR, ONLY_CODEX, CODEX_PLUS_CURSOR]
     protocol: ORCHESTRATION
     mode: null
     template: control.md
@@ -77,7 +77,7 @@ intents:
   - id: task_resume
     category: control
     title: Resume in-flight task at next safe action
-    runtime: ONLY_CURSOR
+    runtimes: [ONLY_CURSOR, ONLY_CODEX, CODEX_PLUS_CURSOR]
     protocol: ORCHESTRATION
     mode: null
     template: control.md
@@ -89,7 +89,7 @@ intents:
   - id: discover
     category: planning
     title: Discovery and diagnosis phase
-    runtime: ONLY_CURSOR
+    runtimes: [ONLY_CURSOR, ONLY_CODEX, CODEX_PLUS_CURSOR]
     protocol: ORCHESTRATION
     mode: Plan
     template: planning.md
@@ -101,7 +101,7 @@ intents:
   - id: plan
     category: planning
     title: Plan Mode — options and recommendation
-    runtime: ONLY_CURSOR
+    runtimes: [ONLY_CURSOR, ONLY_CODEX, CODEX_PLUS_CURSOR]
     protocol: IMPLEMENTATION
     mode: Plan
     template: planning.md
@@ -113,7 +113,7 @@ intents:
   - id: approve_implementation
     category: planning
     title: User approval for UNIFIED implementation slice
-    runtime: ONLY_CURSOR
+    runtimes: [ONLY_CURSOR, ONLY_CODEX, CODEX_PLUS_CURSOR]
     protocol: IMPLEMENTATION
     mode: null
     template: planning.md
@@ -125,7 +125,7 @@ intents:
   - id: approve_model
     category: planning
     title: Approve model tier for task
-    runtime: ONLY_CURSOR
+    runtimes: [ONLY_CURSOR, ONLY_CODEX, CODEX_PLUS_CURSOR]
     protocol: IMPLEMENTATION
     mode: null
     template: planning.md
@@ -137,7 +137,7 @@ intents:
   - id: confirm_locks
     category: planning
     title: Confirm parallel-safety locks
-    runtime: ONLY_CURSOR
+    runtimes: [ONLY_CURSOR, ONLY_CODEX, CODEX_PLUS_CURSOR]
     protocol: ORCHESTRATION
     mode: null
     template: planning.md
@@ -149,7 +149,7 @@ intents:
   - id: implement
     category: work
     title: Generic approved implementation
-    runtime: ONLY_CURSOR
+    runtimes: [ONLY_CURSOR, ONLY_CODEX, CODEX_PLUS_CURSOR]
     protocol: IMPLEMENTATION
     mode: Agent
     template: work.md
@@ -161,7 +161,7 @@ intents:
   - id: implement_feature
     category: work
     title: Implement new feature
-    runtime: ONLY_CURSOR
+    runtimes: [ONLY_CURSOR, ONLY_CODEX, CODEX_PLUS_CURSOR]
     protocol: IMPLEMENTATION
     mode: Agent
     template: work.md
@@ -173,7 +173,7 @@ intents:
   - id: fix_bug
     category: work
     title: Fix bug with root-cause focus
-    runtime: ONLY_CURSOR
+    runtimes: [ONLY_CURSOR, ONLY_CODEX, CODEX_PLUS_CURSOR]
     protocol: IMPLEMENTATION
     mode: Agent
     template: work.md
@@ -185,7 +185,7 @@ intents:
   - id: refactor
     category: work
     title: Scoped refactor without behavior change
-    runtime: ONLY_CURSOR
+    runtimes: [ONLY_CURSOR, ONLY_CODEX, CODEX_PLUS_CURSOR]
     protocol: IMPLEMENTATION
     mode: Agent
     template: work.md
@@ -197,7 +197,7 @@ intents:
   - id: continue_wip
     category: work
     title: Continue work in progress
-    runtime: ONLY_CURSOR
+    runtimes: [ONLY_CURSOR, ONLY_CODEX, CODEX_PLUS_CURSOR]
     protocol: IMPLEMENTATION
     mode: Agent
     template: work.md
@@ -209,7 +209,7 @@ intents:
   - id: validate
     category: quality
     title: Run validation gates
-    runtime: ONLY_CURSOR
+    runtimes: [ONLY_CURSOR, ONLY_CODEX, CODEX_PLUS_CURSOR]
     protocol: IMPLEMENTATION
     mode: Agent
     template: quality.md
@@ -221,7 +221,7 @@ intents:
   - id: qa
     category: quality
     title: QA pass (read-only visual/behavioral)
-    runtime: ONLY_CURSOR
+    runtimes: [ONLY_CURSOR, ONLY_CODEX, CODEX_PLUS_CURSOR]
     protocol: IMPLEMENTATION
     mode: QA
     template: quality.md
@@ -233,7 +233,7 @@ intents:
   - id: audit
     category: quality
     title: Read-only audit
-    runtime: ONLY_CURSOR
+    runtimes: [ONLY_CURSOR, ONLY_CODEX, CODEX_PLUS_CURSOR]
     protocol: IMPLEMENTATION
     mode: Audit
     template: quality.md
@@ -245,7 +245,7 @@ intents:
   - id: close_task
     category: quality
     title: Task closure gate (RUNTIME-D006)
-    runtime: ONLY_CURSOR
+    runtimes: [ONLY_CURSOR, ONLY_CODEX, CODEX_PLUS_CURSOR]
     protocol: ORCHESTRATION
     mode: null
     template: quality.md

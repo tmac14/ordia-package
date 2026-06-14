@@ -5,7 +5,7 @@ Ordia bootstrap — read the project profile under the control store before chan
 - Manifest: `ordia.yaml` — resolve **`{controlRoot}`** from `control.root`
 - Project profile: **`{controlRoot}/PROFILE.md`** (domain agents, guardrails, tracks)
 - Control store: `docs/control/`
-- Validate: `npm run ordia:validate`
+- Validate: `ordia validate --project` (optional npm wrapper: `npm run ordia:validate`)
 
 Declare before change-capable work:
 

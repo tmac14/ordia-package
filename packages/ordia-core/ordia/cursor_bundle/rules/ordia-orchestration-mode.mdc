@@ -1,6 +1,6 @@
 ---
 description: Control-plane orchestration behavior (ORCHESTRATION protocol) for Codex and Cursor Control Plane
-alwaysApply: true
+alwaysApply: false
 ---
 
 # Orchestration Mode (`Protocol: ORCHESTRATION`)

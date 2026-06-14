@@ -2,7 +2,7 @@
 
 **Audience:** control-plane operators and implementers in Ordia-enabled projects  
 **CLI reference:** [packages/ordia-core/docs/CLI.md](https://github.com/tmac14/ordia-package/blob/main/packages/ordia-core/docs/CLI.md)  
-**Version:** v0.10.0 (workflow intents + model routing + pytest CI)
+**Version:** v0.12.0 (task summary, cursor sync, brownfield adoption, pip-first init)
 
 ---
 
@@ -53,6 +53,9 @@ Paste the full output into the chat. It includes header, recovery checklist, and
 | Recommend model tier | `ordia model recommend --task <TASK-ID>` |
 | Validate manifest only | `ordia validate` |
 | Full project validation | `ordia validate --project` |
+| In-flight task summary | `ordia task summary` |
+| Refresh Cursor bundle | `ordia cursor sync` |
+| Brownfield scaffold | `ordia init --skip-existing --with-cursor` |
 | Health check | `ordia doctor` |
 | Describe one intent | `ordia workflow describe fix_bug` |
 | Initialize scaffold | `ordia init --with-cursor` |

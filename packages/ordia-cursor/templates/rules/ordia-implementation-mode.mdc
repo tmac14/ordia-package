@@ -1,6 +1,6 @@
 ---
 description: Executor implementation behavior (IMPLEMENTATION protocol) for Codex and Cursor agents
-alwaysApply: true
+alwaysApply: false
 ---
 
 # Implementation Mode (`Protocol: IMPLEMENTATION`)

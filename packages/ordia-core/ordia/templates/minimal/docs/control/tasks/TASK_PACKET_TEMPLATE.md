@@ -3,8 +3,10 @@
 ## Control
 
 - Track:
-- Protocol:
-- Owner:
+- Owner: (required in TASK_REGISTRY — orchestrator or agent id)
+- Runtime: (ONLY_CURSOR | ONLY_CODEX | CODEX_PLUS_CURSOR)
+- Protocol: (ORCHESTRATION | IMPLEMENTATION)
+- planned_write_paths: (registry list — required for IN_FLIGHT+)
 - Validator:
 - Status:
 - Priority:

@@ -207,9 +207,26 @@ class OrdiaGreenfieldTests(unittest.TestCase):
             self.assertIn("docs/control/protocols/CURSOR_ORCHESTRATION.md", agents)
             self.assertIn("docs/control/protocols/CODEX_ORCHESTRATION.md", agents)
             self.assertIn("docs/control/protocols/RECOVERY_RUNBOOK.md", agents)
+            self.assertIn("docs/control/protocols/RUNTIME_HANDOFF.md", agents)
 
             task_exec = (protocols_dir / "TASK_EXECUTION.md").read_text(encoding="utf-8")
             self.assertIn("gf-proto", task_exec)
+
+    def test_greenfield_pip_first_defaults(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            target = Path(tmp)
+            init = self._init(target, "--profile", "gf-pip")
+            self.assertEqual(init.returncode, 0, init.stderr or init.stdout)
+
+            manifest = (target / "ordia.yaml").read_text(encoding="utf-8")
+            self.assertIn("validator: ordia validate --project", manifest)
+
+            registry = (target / "docs" / "control" / "TASK_REGISTRY.yaml").read_text(encoding="utf-8")
+            self.assertIn("model_tier_pending:", registry)
+
+            catalog = (target / "docs" / "control" / "commands.catalog.json").read_text(encoding="utf-8")
+            self.assertIn("ordia validate --project", catalog)
+            self.assertIn("ordia task summary", catalog)
 
     def test_greenfield_product_docs_installed(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
