@@ -94,6 +94,9 @@ class OrdiaConfig:
         "models_telemetry_root",
         "models_default_tier",
         "models_require_approval_above",
+        "profile_cursor_rules",
+        "validate_inventory",
+        "inventory_doc_path",
         "session_runtimes",
         "session_protocols",
         "session_modes",
@@ -183,6 +186,16 @@ class OrdiaConfig:
         self.models_telemetry_root = self.root / telemetry_rel.replace("\\", "/")
         self.models_default_tier = str(models.get("defaultTier", "T1")).strip().upper() or "T1"
         self.models_require_approval_above = str(models.get("requireApprovalAbove", "T1")).strip().upper() or "T1"
+
+        profile_ext = raw.get("profileExtensions") if isinstance(raw.get("profileExtensions"), dict) else {}
+        self.profile_cursor_rules = _normalize_roots(profile_ext.get("cursorRules", []))
+        self.validate_inventory = bool(profile_ext.get("validateInventory", False))
+        inventory_doc = str(profile_ext.get("inventoryDoc", "DOCUMENTATION_INVENTORY.md")).strip()
+        self.inventory_doc_path = (
+            _resolve_control_relative(self.control_root, self.root, inventory_doc)
+            if inventory_doc
+            else None
+        )
 
     def commands_catalog_path(self) -> Path | None:
         if not self.commands_catalog:
@@ -347,4 +360,20 @@ def validate_ordia_manifest(config: OrdiaConfig, errors: list[str], warnings: li
             warnings.append(
                 f"ordia.yaml models.registry path missing: "
                 f"{config.models_registry_path.relative_to(config.root)}"
+            )
+
+    for rule_rel in getattr(config, "profile_cursor_rules", []):
+        rule_path = config.root / rule_rel.replace("\\", "/")
+        if not rule_path.is_file():
+            warnings.append(
+                f"ordia.yaml profileExtensions.cursorRules path missing: "
+                f"{rule_path.relative_to(config.root)}"
+            )
+
+    if getattr(config, "validate_inventory", False):
+        inv_path = getattr(config, "inventory_doc_path", None)
+        if inv_path and not inv_path.is_file():
+            warnings.append(
+                f"ordia.yaml profileExtensions.inventoryDoc path missing: "
+                f"{inv_path.relative_to(config.root)}"
             )

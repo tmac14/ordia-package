@@ -22,6 +22,24 @@ auditors tracing when behavior changed.
 
 ---
 
+## [0.9.1] — 2026-06-14
+
+**Program:** Ordia v0.9.1 — handoff protocol + task packet template + manifest profile extensions
+
+### Added
+
+- **`ordia/protocols/RUNTIME_HANDOFF.md`** — portable runtime handoff protocol (installed on init)
+- **`docs/control/tasks/TASK_PACKET_TEMPLATE.md`** in minimal and monorepo templates
+- Manifest v0.3 **`profileExtensions.cursorRules`** — optional profile-specific Cursor rules (warning if missing)
+- Manifest v0.3 **`profileExtensions.validateInventory`** + **`inventoryDoc`** — optional documentation inventory check
+
+### Changed
+
+- Removed hardcoded **`narofitness`** profile cursor rules from CLI; use `profileExtensions` in `ordia.yaml` instead
+- Greenfield init installs **seven** protocol templates (six prior + RUNTIME_HANDOFF)
+
+---
+
 ## [0.9.0] — 2026-06-14
 
 **Program:** Ordia v0.9 — professional init scaffold + profile under control root (`ORDIA-D025`)

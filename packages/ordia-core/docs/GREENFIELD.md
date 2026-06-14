@@ -1,6 +1,6 @@
 # Greenfield Setup Guide
 
-**Package:** ordia-core 0.8.0  
+**Package:** ordia-core 0.9.1  
 **Related:** [CLI.md](./CLI.md) · [HOOKS_AND_RULES.md](./HOOKS_AND_RULES.md) · [TESTING.md](./TESTING.md)
 
 ---
@@ -36,7 +36,7 @@ and engineers verifying wheel packaging after release.
 ### A. PyPI wheel (target state)
 
 ```powershell
-pip install ordia-core==0.8.0
+pip install ordia-core==0.9.1
 ordia --help
 ```
 
@@ -51,7 +51,7 @@ Verify:
 
 ```powershell
 python -c "import ordia; print(ordia.__version__)"
-# 0.8.0
+# 0.9.1
 ```
 
 ### B. Editable monorepo development
@@ -95,7 +95,7 @@ my-pim/
 │   ├── DECISION_LOG.md
 │   ├── EVIDENCE_INDEX.md
 │   ├── tasks/
-│   └── protocols/          # six templates
+│   └── protocols/          # seven templates
 └── docs/ordia/
     ├── README.md           # copied spec index
     ├── SPEC_v0.2.md

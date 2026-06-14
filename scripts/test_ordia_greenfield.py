@@ -141,6 +141,10 @@ class OrdiaGreenfieldTests(unittest.TestCase):
             for name in ("PROFILE.md", "COMMANDS.md", "commands.catalog.json"):
                 self.assertTrue((control / name).is_file(), f"missing {name}")
             self.assertTrue((control / "tasks").is_dir(), "tasks/ directory missing")
+            self.assertTrue(
+                (control / "tasks" / "TASK_PACKET_TEMPLATE.md").is_file(),
+                "TASK_PACKET_TEMPLATE.md missing",
+            )
             manifest = (target / "ordia.yaml").read_text(encoding="utf-8")
             self.assertIn('version: "0.3"', manifest)
             self.assertIn("projectProfile: PROFILE.md", manifest)
@@ -191,6 +195,7 @@ class OrdiaGreenfieldTests(unittest.TestCase):
                 "CODEX_ORCHESTRATION.md",
                 "CODEX_IMPLEMENTATION.md",
                 "RECOVERY_RUNBOOK.md",
+                "RUNTIME_HANDOFF.md",
             }
             installed = {p.name for p in protocols_dir.glob("*.md")}
             self.assertEqual(expected, installed, f"missing protocols: {expected - installed}")

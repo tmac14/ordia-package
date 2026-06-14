@@ -275,10 +275,11 @@ def cmd_validate(args: argparse.Namespace) -> int:
             strict_model_report=bool(getattr(args, "strict_model_report", False)),
             session_profile=_session_declared_profile(root),
         )
-        if config.profile == "narofitness":
-            opts.profile_cursor_rules = [".cursor/rules/narofitness-permanent-guardrails.mdc"]
+        if config.profile_cursor_rules:
+            opts.profile_cursor_rules = list(config.profile_cursor_rules)
+        if config.validate_inventory and config.inventory_doc_path:
             opts.validate_inventory = True
-            opts.inventory_path = str(config.control_root / "DOCUMENTATION_INVENTORY.md")
+            opts.inventory_path = str(config.inventory_doc_path)
         result = validate_project(root, config, opts)
         for warning in result.warnings:
             print(f"WARNING: {warning}")
